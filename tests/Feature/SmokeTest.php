@@ -57,10 +57,26 @@ class SmokeTest extends TestCase
         $this->get('/admin')->assertStatus(200);
     }
 
-    /** Pages behind the 'auth' middleware. */
+    /**
+     * Only HomeController actually enforces auth. CartController and
+     * PaymentController spell the constructor `_construct` (one underscore),
+     * so their `middleware('auth')` call never runs and guests get a 200.
+     * These assert current behaviour — if a fix lands, they should flip to
+     * assertRedirect('/login').
+     */
     public function test_home_redirects_guests_to_login()
     {
         $this->get('/home')->assertRedirect('/login');
+    }
+
+    public function test_my_cart_is_currently_reachable_by_guests()
+    {
+        $this->get('/myCart')->assertStatus(200);
+    }
+
+    public function test_my_order_is_currently_reachable_by_guests()
+    {
+        $this->get('/myOrder')->assertStatus(200);
     }
 
     public function test_home_loads_for_authenticated_user()
