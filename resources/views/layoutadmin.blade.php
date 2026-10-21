@@ -18,7 +18,7 @@
         background-size: 100% 100%;
     }
 
-    button {
+    main button {
         background-color: green;
         border: 1px solid green;
         color: white;
@@ -27,7 +27,7 @@
         height: 40px;
         transition: background-color 0.3s;
     }
-    button:hover {
+    main button:hover {
         background-color: darkgreen;
     }
     .category{
@@ -102,39 +102,12 @@
     </style>
   </head>
   <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
- 
-  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
- 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto">
-            <li class="nav-item active">
-            <a class="nav-link" style="color:lightgreen; font-family:Georgia,serif;"href="admin"><strong>Q . Park</strong><span class="visually-hidden">(current)</span></a>
-            </li>
-        </ul>
-        <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('viewUser') }}">User</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('viewProduct') }}">Parking</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('viewCategory') }}">Category</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('allOrder') }}">Payment</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('viewFeedback') }}">Feedback</a>
-            </li>
-        </ul>
-    </div>
-</nav>
+@include('partials.header', ['variant' => 'admin'])
 
 
+<main>
 @yield('content')
+</main>
+  @include('partials.footer')
   </body>
 </html>

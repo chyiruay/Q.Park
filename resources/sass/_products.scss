@@ -1,0 +1,138 @@
+// Car park listing pages (products.blade.php, productDetail.blade.php).
+
+$qpark-green: #1a8f4c;
+$qpark-green-dark: #146c3a;
+
+.product-hero {
+    padding: 3.5rem 0 2.5rem;
+    background-image:
+        linear-gradient(rgba(8, 20, 14, 0.66), rgba(8, 20, 14, 0.66)),
+        url('/images/parking_2.webp');
+    background-size: cover;
+    background-position: center;
+    text-align: center;
+}
+
+.product-hero__title {
+    margin-bottom: 1.5rem;
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 2px 1rem rgba(0, 0, 0, 0.45);
+}
+
+// Search moved out of the navbar and onto the page.
+.product-search {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 32rem;
+    margin: 0 auto 1.5rem;
+
+    .form-control {
+        border: 0;
+        padding: 0.65rem 1rem;
+
+        &:focus {
+            box-shadow: 0 0 0 0.2rem rgba($qpark-green, 0.35);
+        }
+    }
+
+    .btn-search {
+        flex: 0 0 auto;
+        padding: 0.65rem 1.5rem;
+        font-weight: 600;
+        color: #fff;
+        background-color: $qpark-green;
+        border: 0;
+
+        &:hover,
+        &:focus {
+            color: #fff;
+            background-color: $qpark-green-dark;
+        }
+    }
+}
+
+.product-filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.product-filters__item {
+    padding: 0.45rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #fff;
+    text-decoration: none;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+
+    &:hover,
+    &:focus {
+        color: $qpark-green-dark;
+        background: #fff;
+        border-color: #fff;
+    }
+}
+
+// --- cards ------------------------------------------------------------------
+
+.product-card {
+    display: block;
+    height: 100%;
+    border-radius: 0.875rem;
+    overflow: hidden;
+    background: #fff;
+    text-decoration: none;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.18);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover,
+    &:focus-visible {
+        transform: translateY(-4px);
+        box-shadow: 0 0.9rem 2rem rgba(0, 0, 0, 0.28);
+    }
+}
+
+.product-card__media {
+    aspect-ratio: 16 / 10;
+    background: #e9ecef;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+}
+
+.product-card__body {
+    padding: 1rem 1.1rem 1.2rem;
+}
+
+.product-card__title {
+    margin-bottom: 0.3rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1d2630;
+}
+
+.product-card__price {
+    margin: 0;
+    font-weight: 700;
+    color: $qpark-green-dark;
+
+    span {
+        font-weight: 400;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+}
+
+.product-empty {
+    padding: 3rem 0;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.85);
+}
