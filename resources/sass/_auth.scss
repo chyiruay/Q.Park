@@ -1,0 +1,106 @@
+// Auth pages (login, register, password reset).
+// Scoped to .auth-* so the CDN-Bootstrap-4 views are unaffected.
+
+$qpark-green: #1a8f4c;
+$qpark-green-dark: #146c3a;
+
+.auth-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 160px);
+    padding: 1.5rem 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 27rem;
+    padding: 2.5rem 2rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.35);
+}
+
+.auth-brand {
+    margin-bottom: 1.75rem;
+    text-align: center;
+
+    h1 {
+        margin-bottom: 0.4rem;
+        font-size: clamp(1.75rem, 6vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: $qpark-green-dark;
+    }
+
+    p {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: #5b6470;
+    }
+}
+
+// Keep floating labels readable against the translucent card.
+.auth-card .form-control {
+    background-color: #fff;
+    border-color: #d5dae1;
+
+    &:focus {
+        border-color: $qpark-green;
+        box-shadow: 0 0 0 0.2rem rgba($qpark-green, 0.2);
+    }
+}
+
+.auth-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+}
+
+.auth-card .form-check-input:checked {
+    background-color: $qpark-green;
+    border-color: $qpark-green;
+}
+
+.auth-link,
+.auth-footer a {
+    color: $qpark-green-dark;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
+}
+
+.btn-qpark {
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: $qpark-green;
+    border: 0;
+
+    &:hover,
+    &:focus {
+        color: #fff;
+        background-color: $qpark-green-dark;
+    }
+
+    &:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba($qpark-green, 0.35);
+    }
+}
+
+.auth-footer {
+    margin: 1.5rem 0 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #5b6470;
+}
