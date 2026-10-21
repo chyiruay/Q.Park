@@ -12,7 +12,7 @@
 
             @foreach($categories as $category)
             <input type="hidden" class="form-control" id="hid" name="hid" value="{{$category->id}}">
-            <div class="form-group">
+            <div class="mb-3">
                 <label for="Category Name">Name</label>
                 <input type="text" class="form-control" id="categoryName" name="categoryName" value="{{$category->name}}">
             </div>

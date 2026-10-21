@@ -13,9 +13,9 @@
             <div class="table-title">
                 <div class="row">
                     <div class="col-sm-8" style="color:white;"><h2>Parking List</h2></div>
-                    <div class="col-sm-4 text-right">
+                    <div class="col-sm-4 text-end">
                         <a href="{{ route('insertProduct') }}" class="btn btn-add-new">
-                            <i class="fas fa-plus-circle mr-2"></i>Add New Parking
+                            <i class="fas fa-plus-circle me-2"></i>Add New Parking
                         </a>
                     </div>
                 </div>
@@ -42,8 +42,8 @@
                         <td>RM {{$product->price}}</td>                    
                         <td>{{$product->catname}}</td>
                         <td>         <!-- editProduct.php?id=$product->id -->
-                            <a href="{{route('editProduct',['id'=>$product->id])}}" class="edit" title="Edit" data-toggle="tooltip"><i class="material-icons">Edit</i></a><br>
-                            <a href="{{route('deleteProduct',['id'=>$product->id])}}" class="delete" style="color:red"title="Delete" data-toggle="tooltip" onclick="return confirm('Sure Want Delete?')"><i class="material-icons">Delete</i></a>
+                            <a href="{{route('editProduct',['id'=>$product->id])}}" class="edit" title="Edit" data-bs-toggle="tooltip"><i class="material-icons">Edit</i></a><br>
+                            <a href="{{route('deleteProduct',['id'=>$product->id])}}" class="delete" style="color:red"title="Delete" data-bs-toggle="tooltip" onclick="return confirm('Sure Want Delete?')"><i class="material-icons">Delete</i></a>
                         </td>
                     </tr>
                     @endforeach

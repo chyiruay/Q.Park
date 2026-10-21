@@ -24,7 +24,7 @@
                 Email : {{$users->email}}<br>
                 Phone Number : {{$users->phone_number}}</strong><br>
                 <div style="text-align:right;">
-                    <a href="{{route('deleteUser',['id'=>$users->id])}}" class="delete" title="Delete" data-toggle="tooltip"><i class="material-icons"><button 
+                    <a href="{{route('deleteUser',['id'=>$users->id])}}" class="delete" title="Delete" data-bs-toggle="tooltip"><i class="material-icons"><button 
                     style="background-color:white; color:red; border:1px solid red; border-radius: 20px; width:75px; height:35px; font-size:18px;">Delete</button></i></a>
                 </div>
             </div>

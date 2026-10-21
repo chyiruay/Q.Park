@@ -1,6 +1,15 @@
 import 'bootstrap';
 
 /**
+ * jQuery is still required by the Stripe tokenisation script in
+ * resources/views/myCart.blade.php. Pinned to 3.x because that script uses
+ * .bind(), which jQuery 4 removed. Bootstrap 5 itself does not need jQuery.
+ */
+
+import jQuery from 'jquery';
+window.$ = window.jQuery = jQuery;
+
+/**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the
  * CSRF token as a header based on the value of the "XSRF" token cookie.

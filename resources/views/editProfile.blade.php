@@ -11,15 +11,15 @@
                     @CSRF
                     @foreach($users as $users)
                     <input type="hidden" class="form-control" id="hid" name="hid" value="{{$users->id}}">
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="User Name">Name</label>
                         <input type="text" class="form-control" id="userName" name="userName" value="{{$users->name}}">
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="User Email">Email</label>
                         <input type="email" class="form-control" id="email" name="email" value="{{$users->email}}">
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="User PhoneNumber">Phone Number</label>
                         <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{$users->phone_number}}">
                     </div>

@@ -11,9 +11,9 @@
             <div class="table-title">
                 <div class="row">
                     <div class="col-sm-8" style="color:white;"><h2>Payment <b>List</b></h2></div>
-                    <div class="col-sm-4 text-right">
+                    <div class="col-sm-4 text-end">
                         <a href="{{ route('salesReport') }}" class="btn btn-add-new">
-                            <i class="fas fa-plus-circle mr-2"></i>Download Sales Report
+                            <i class="fas fa-plus-circle me-2"></i>Download Sales Report
                         </a>
                     </div>
                     <div class="col-sm-4">

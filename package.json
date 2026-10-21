@@ -16,6 +16,7 @@
         "vue": "^3.2.37"
     },
     "dependencies": {
+        "jquery": "^3.7.1",
         "vue-loader": "^17.4.2"
     }
 }

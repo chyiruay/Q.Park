@@ -9,12 +9,12 @@
                 <div class="card-body" style="background-color:lightgray;">
                     <form method="POST", action="{{ route('addCategory')}}">
                         @CSRF
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="Category ID">Category ID</label>
                             <input type="text" class="form-control" id="categoryID" name="categoryID">
                         </div>
                         
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="Category name">Name</label>
                             <input type="text" class="form-control" id="categoryName" name="categoryName">
                         </div>
