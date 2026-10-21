@@ -1,0 +1,78 @@
+// Help & support page.
+
+$qpark-green: #1a8f4c;
+$qpark-green-dark: #146c3a;
+
+.help-hero {
+    padding: 4rem 0;
+    background-image:
+        linear-gradient(rgba(8, 20, 14, 0.6), rgba(8, 20, 14, 0.6)),
+        url('/images/bg_help.jpeg');
+    background-size: cover;
+    background-position: center;
+    text-align: center;
+}
+
+.help-hero__title {
+    margin-bottom: 0.5rem;
+    font-size: clamp(2rem, 6vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 2px 1rem rgba(0, 0, 0, 0.45);
+}
+
+.help-hero__subtitle {
+    margin: 0;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.help-section-title {
+    margin-bottom: 2rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    color: #1d2630;
+}
+
+// Equal-height cards. The originals were fixed at 400px wide and overflowed
+// the row on narrower screens.
+.help-card {
+    height: 100%;
+    padding: 1.5rem;
+    border-radius: 0.875rem;
+    background: #fff;
+    border: 1px solid #e3e7eb;
+    box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.07);
+}
+
+.help-card__title {
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $qpark-green-dark;
+}
+
+.help-card__body {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: #4d5560;
+
+    a {
+        color: $qpark-green-dark;
+        font-weight: 600;
+    }
+}
+
+.help-footnote {
+    margin: 2.5rem 0 0;
+    text-align: center;
+    color: #5b6470;
+
+    a {
+        color: $qpark-green-dark;
+        font-weight: 600;
+    }
+}

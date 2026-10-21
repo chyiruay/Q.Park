@@ -10,17 +10,7 @@
 
     <title>Quick Park</title>
     <link rel="icon" type="image/x-icon" href="images/logo.png">
-    <style>
-.inline{
-        display:inline-block;
-      }
-      .center-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      }
-    </style>
-  </head>
+</head>
   <body>
 @include('partials.header')
 
