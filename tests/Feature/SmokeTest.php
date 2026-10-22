@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,91 +14,83 @@ use Tests\TestCase;
  * These assert status codes only, not correctness. They exist to catch
  * breakage during the Laravel 10 -> 13 upgrade, where the failure mode is
  * a 500 from a renamed method or a removed Blade directive.
+ *
+ * Who may reach what is AccessControlTest's job, not this file's.
  */
 class SmokeTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** Pages any visitor can reach. */
-    public function test_welcome_page_loads()
+    public function test_public_pages_load()
     {
-        $this->get('/')->assertStatus(200);
+        $product = Product::factory()->create();
+
+        foreach (['/', '/help', '/login', '/register', '/products', '/viewDetail/'.$product->categoryID] as $url) {
+            $this->get($url)->assertStatus(200, $url);
+        }
     }
 
-    public function test_help_page_loads()
+    public function test_search_handles_a_hostile_keyword()
     {
-        $this->get('/help')->assertStatus(200);
+        $this->post('/product', ['keyword' => "' OR 1=1 -- <b>x</b>"])->assertStatus(200);
     }
 
-    public function test_products_page_loads()
+    public function test_customer_pages_load()
     {
-        $this->get('/products')->assertStatus(200);
+        $customer = User::factory()->create();
+        $product = Product::factory()->create();
+
+        $urls = [
+            '/home',
+            '/order/'.$product->id,
+            '/myCart',
+            '/myOrder',
+            '/insertFeedback',
+            '/viewProfile',
+            '/editProfile/'.$customer->id,
+            '/editPassword/'.$customer->id,
+            '/deleteAccount',
+        ];
+
+        foreach ($urls as $url) {
+            $this->actingAs($customer)->get($url)->assertStatus(200, $url);
+        }
     }
 
-    public function test_view_category_page_loads()
+    public function test_admin_sees_the_admin_nav_on_shared_profile_pages()
     {
-        $this->get('/viewCategory')->assertStatus(200);
+        $admin = User::factory()->admin()->create();
+
+        foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id, '/deleteAccount'] as $url) {
+            $this->actingAs($admin)->get($url)
+                ->assertStatus(200, $url)
+                ->assertSee('bg_admin.jpg')
+                ->assertSee(route('viewCategory'));
+        }
     }
 
-    public function test_login_page_loads()
+    public function test_admin_pages_load()
     {
-        $this->get('/login')->assertStatus(200);
-    }
+        $admin = User::factory()->admin()->create();
+        $product = Product::factory()->create();
+        $category = Category::findOrFail($product->categoryID);
 
-    public function test_register_page_loads()
-    {
-        $this->get('/register')->assertStatus(200);
-    }
+        $urls = [
+            '/admin',
+            '/viewUser',
+            '/viewProduct',
+            '/insertProduct',
+            '/editProduct/'.$product->id,
+            '/viewCategory',
+            '/insertCategory',
+            '/editCategory/'.$category->id,
+            '/viewFeedback',
+            '/allOrder',
+            '/salesReport',
+        ];
 
-    /**
-     * NOTE: /admin has no auth middleware, so a guest reaches it.
-     * This asserts current behaviour, not desired behaviour.
-     */
-    public function test_admin_page_loads()
-    {
-        $this->get('/admin')->assertStatus(200);
-    }
-
-    /**
-     * Only HomeController actually enforces auth. CartController and
-     * PaymentController spell the constructor `_construct` (one underscore),
-     * so their `middleware('auth')` call never runs and guests get a 200.
-     * These assert current behaviour — if a fix lands, they should flip to
-     * assertRedirect('/login').
-     */
-    public function test_home_redirects_guests_to_login()
-    {
-        $this->get('/home')->assertRedirect('/login');
-    }
-
-    public function test_my_cart_is_currently_reachable_by_guests()
-    {
-        $this->get('/myCart')->assertStatus(200);
-    }
-
-    public function test_my_order_is_currently_reachable_by_guests()
-    {
-        $this->get('/myOrder')->assertStatus(200);
-    }
-
-    public function test_home_loads_for_authenticated_user()
-    {
-        $this->actingAs(User::factory()->create())
-             ->get('/home')
-             ->assertStatus(200);
-    }
-
-    public function test_my_cart_loads_for_authenticated_user()
-    {
-        $this->actingAs(User::factory()->create())
-             ->get('/myCart')
-             ->assertStatus(200);
-    }
-
-    public function test_my_order_loads_for_authenticated_user()
-    {
-        $this->actingAs(User::factory()->create())
-             ->get('/myOrder')
-             ->assertStatus(200);
+        foreach ($urls as $url) {
+            $this->actingAs($admin)->get($url)->assertStatus(200, $url);
+        }
     }
 }
