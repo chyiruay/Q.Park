@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -22,13 +24,6 @@ class LoginController extends Controller
     use AuthenticatesUsers;
 
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
-    protected $redirectTo = RouteServiceProvider::HOME;
-
-    /**
      * Create a new controller instance.
      *
      * @return void
@@ -36,5 +31,30 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    /** Same form, posting to /admin/login instead of /login. */
+    public function showAdminLoginForm()
+    {
+        return view('auth.login', ['adminLogin' => true]);
+    }
+
+    /**
+     * Each form only matches accounts of its own kind. `isAdmin` is a real column,
+     * so the provider turns it into a where clause on the lookup — an admin at
+     * /login simply isn't found, and gets the usual "credentials do not match".
+     */
+    protected function credentials(Request $request)
+    {
+        return array_merge(
+            $request->only($this->username(), 'password'),
+            ['isAdmin' => $request->is('admin/login')]
+        );
+    }
+
+    /** Overrides the $redirectTo property: where you land depends on your role. */
+    protected function redirectTo()
+    {
+        return Auth::user()->isAdmin ? route('admin') : RouteServiceProvider::HOME;
     }
 }

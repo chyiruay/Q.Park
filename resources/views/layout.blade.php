@@ -10,9 +10,11 @@
 
     <title>Quick Park</title>
     <link rel="icon" type="image/x-icon" href="images/logo.png">
+    @php($isAdmin = Auth::user()?->isAdmin ?? false)
     <style>
       body{
-        background-image: url("{{ asset('images/parking_1.webp') }}");
+        {{-- profile/password/delete pages are shared, so keep admins in the admin skin --}}
+        background-image: url("{{ asset($isAdmin ? 'images/bg_admin.jpg' : 'images/parking_1.webp') }}");
         background-repeat: no-repeat;
         background-attachment: fixed;
         background-size: 100% 100%;
@@ -62,7 +64,7 @@
     </style>
   </head>
   <body>
-@include('partials.header')
+@include('partials.header', ['variant' => $isAdmin ? 'admin' : 'customer'])
 
 @yield('content')
   <!-- Grid container -->

@@ -69,10 +69,16 @@
                             {{ Auth::user()->name }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="siteNavUser">
+                            @if (Auth::user()->isAdmin)
+                                <li><a class="dropdown-item" href="{{ route('admin') }}">Admin</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            @endif
                             <li><a class="dropdown-item" href="{{ route('viewProfile') }}">My Profile</a></li>
-                            <li><a class="dropdown-item" href="{{ route('myCart') }}">My Cart</a></li>
-                            <li><a class="dropdown-item" href="{{ route('myOrder') }}">Payment History</a></li>
-                            <li><a class="dropdown-item" href="{{ route('insertFeedback') }}">Feedback</a></li>
+                            @unless (Auth::user()->isAdmin)
+                                <li><a class="dropdown-item" href="{{ route('myCart') }}">My Cart</a></li>
+                                <li><a class="dropdown-item" href="{{ route('myOrder') }}">Payment History</a></li>
+                                <li><a class="dropdown-item" href="{{ route('insertFeedback') }}">Feedback</a></li>
+                            @endunless
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="{{ route('logout') }}"

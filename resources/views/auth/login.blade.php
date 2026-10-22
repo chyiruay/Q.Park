@@ -1,15 +1,23 @@
 @extends('layouts.app')
 
+@php($adminLogin = $adminLogin ?? false)
+
 @section('content')
 <div class="auth-wrapper">
     <div class="auth-card">
 
         <div class="auth-brand">
-            <h1>Quick Park</h1>
-            <p>Reserve your car park ahead of time and skip the hunt for a space.</p>
+            <h1>Quick Park{{ $adminLogin ? ' Admin' : '' }}</h1>
+            <p>
+                @if ($adminLogin)
+                    {{ __('Staff sign-in. Customer accounts cannot be used here.') }}
+                @else
+                    {{ __('Reserve your car park ahead of time and skip the hunt for a space.') }}
+                @endif
+            </p>
         </div>
 
-        <form method="POST" action="{{ route('login') }}" novalidate>
+        <form method="POST" action="{{ $adminLogin ? route('admin.login') : route('login') }}" novalidate>
             @csrf
 
             <div class="form-floating mb-3">
@@ -66,10 +74,20 @@
             </button>
         </form>
 
-        <p class="auth-footer">
-            {{ __("Don't have an account?") }}
-            <a href="{{ route('register') }}">{{ __('Register') }}</a>
-        </p>
+        @if ($adminLogin)
+            <p class="auth-footer">
+                <a href="{{ route('login') }}">{{ __('Back to customer login') }}</a>
+            </p>
+        @else
+            <p class="auth-footer">
+                {{ __("Don't have an account?") }}
+                <a href="{{ route('register') }}">{{ __('Register') }}</a>
+            </p>
+
+            <p class="auth-footer">
+                <a href="{{ route('admin.login') }}">{{ __('Login as admin') }}</a>
+            </p>
+        @endif
 
     </div>
 </div>
