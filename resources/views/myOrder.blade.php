@@ -27,13 +27,17 @@
 
                 <tbody>
 
-                    @foreach($orders as $order)
+                    @forelse($orders as $order)
                     <tr>
                         <td>{{$order->id}}</td>
                         <td>{{$order->created_at}}</td>                        
                         <td>RM {{$order->amount}}</td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="3" class="text-center">No payments yet. Bookings you pay for will appear here.</td>
+                    </tr>
+                    @endforelse
 
                 </tbody>
             </table>

@@ -23,7 +23,7 @@
                        class="form-control"
                        name="keyword"
                        type="search"
-                       placeholder="Search by name or location">
+                       placeholder="Search by name or category">
                 <button class="btn btn-search" type="submit">Search</button>
             </form>
         </div>

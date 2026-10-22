@@ -10,13 +10,13 @@
 
         <form class="product-search" action="{{ route('search.product') }}" method="POST" role="search">
             @csrf
-            <label for="productKeyword" class="visually-hidden">Search car parks by name</label>
+            <label for="productKeyword" class="visually-hidden">Search car parks by name or category</label>
             <input id="productKeyword"
                    class="form-control"
                    name="keyword"
                    type="search"
                    value="{{ request('keyword') }}"
-                   placeholder="Search by car park name">
+                   placeholder="Search by name or category">
             <button class="btn btn-search" type="submit">Search</button>
         </form>
 

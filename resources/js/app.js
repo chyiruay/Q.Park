@@ -36,4 +36,7 @@ app.component('example-component', ExampleComponent);
  * scaffolding. Otherwise, you will need to add an element yourself.
  */
 
-app.mount('#app');
+// only the laravel/ui auth layout has #app; the CDN layouts don't
+if (document.querySelector('#app')) {
+    app.mount('#app');
+}
