@@ -13,49 +13,17 @@
                         <img src="{{ asset('images/') }}/{{$product->image}}" class="img-fluid" alt="" style="width:250px; height:150px;">
                         <div class="floorPlan"><img src="{{ asset('floorPlan/') }}/{{$product->floorPlan}}" alt=""  style="margin-left:260px; margin-top:-180px; width:250px; height:150px;"></div>
                         <div>
-                            <p><strong>Price : RM {{$product->price}} perhours</strong></p>
-                            <strong>Date : </strong><input type="date" name="date">
-                            <strong style="margin-left:40px;">Start from : </strong><input type="time"><p>
-                            <p><strong>Hours : <input type="number" name="quantity" value="1" style="width:20%"> hours</strong></input>
+                            @include('partials.alerts')
+                            <p><strong>Price : RM {{$product->price}} per hour</strong></p>
+                            <strong>Date : </strong><input type="date" name="date" value="{{ old('date') }}" min="{{ date('Y-m-d') }}" required>
+                            <strong style="margin-left:40px;">Start from : </strong><input type="time" name="time" value="{{ old('time') }}" required><p>
+                            <p><strong>Hours : <input type="number" name="quantity" value="{{ old('quantity', 1) }}" min="1" max="24" style="width:20%" required> hours</strong></input>
                             <strong style="margin-left:40px;">Parking Space : </strong>
-                                <select name="space">
-                                    <option></option>
-                                    <option>A1</option>
-                                    <option>A2</option>
-                                    <option>A3</option>
-                                    <option>A4</option>
-                                    <option>A5</option> 
-                                    <option>A6</option>
-                                    <option>A7</option>
-                                    <option>A8</option>
-                                    <option>A9</option>
-                                    <option>A10</option>
-                                    <option>A11</option>
-                                    <option>A12</option>
-                                    <option>A13</option>
-                                    <option>A14</option>
-                                    <option>A15</option>
-                                    <option>A16</option>
-                                    <option>A17</option>
-                                    <option>A18</option>
-                                    <option>A19</option>
-                                    <option>A20</option>
-                                    <option>A21</option>
-                                    <option>A22</option>
-                                    <option>A23</option>
-                                    <option>A24</option>
-                                    <option>A25</option>
-                                    <option>A26</option>
-                                    <option>A27</option>
-                                    <option>A28</option>
-                                    <option>A29</option>
-                                    <option>A30</option>
-                                    <option>A31</option>
-                                    <option>A32</option>
-                                    <option>A33</option>
-                                    <option>A34</option>
-                                    <option>A35</option>
-                                    <option>A36</option>
+                                <select name="space" required>
+                                    <option value="">Select</option>
+                                    @foreach (\App\Models\Product::spaces() as $space)
+                                        <option @selected(old('space') === $space)>{{ $space }}</option>
+                                    @endforeach
                                 </select>
                             <p style="text-align:right;"><button class="btn btn-danger btn-xs" type="submit" style="width:100%; background-color:green; border-radius:20px; border:green">Add to cart</button></p>
                         </div>
