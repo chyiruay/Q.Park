@@ -7,21 +7,21 @@
         <div class="card" style="background-color:lightgray; margin-bottom:50px;">
             <div class="card-header" style="background-color:lightgray; font-size:40px;">Edit Profile</div>
             <div class="card-body">
+                @include('partials.alerts')
                 <form method="POST" action="{{ route('updateProfile') }}">
                     @CSRF
                     @foreach($users as $users)
-                    <input type="hidden" class="form-control" id="hid" name="hid" value="{{$users->id}}">
                     <div class="mb-3">
                         <label for="User Name">Name</label>
-                        <input type="text" class="form-control" id="userName" name="userName" value="{{$users->name}}">
+                        <input type="text" class="form-control" id="userName" name="userName" value="{{ old('userName', $users->name) }}" required>
                     </div>
                     <div class="mb-3">
                         <label for="User Email">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{$users->email}}">
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $users->email) }}" required>
                     </div>
                     <div class="mb-3">
                         <label for="User PhoneNumber">Phone Number</label>
-                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{$users->phone_number}}">
+                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ old('phone_number', $users->phone_number) }}" required>
                     </div>
                     @endforeach
                     <div style="text-align:right;">

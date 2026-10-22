@@ -7,74 +7,52 @@ use DB; //import
 use App\Models\Product; //import
 use App\Models\Category; //import
 
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+
 use Session;
 
 class ProductController extends Controller
 {
+    /** Shared by store() and update(); 4 MB is roughly the largest image committed. */
+    private const IMAGE_RULES = 'image|mimes:jpg,jpeg,png,webp|max:4096';
+
     public function create()
     {
         $categories = \App\Models\Category::all();
         return view('insertProduct')->with('categoryID', $categories);
     }
 
-    public function store(){
-        $r=request();
-        $image=$r->file('product-image');
-        $image->move('images',$image->getClientOriginalName());
-        $imageName=$image->getClientOriginalName();
-
-        $r=request();
-        $floorPlan=$r->file('product-floorPlan');
-        $floorPlan->move('floorPlan',$floorPlan->getClientOriginalName());
-        $fpName=$floorPlan->getClientOriginalName();
+    public function store(Request $request){
+        $data=$request->validate([
+            'productName'=>'required|string|max:255',
+            'price'=>'required|numeric|min:0|max:9999',
+            'categoryID'=>'required|exists:categories,id',
+            'product-image'=>'required|'.self::IMAGE_RULES,
+            'product-floorPlan'=>'required|'.self::IMAGE_RULES,
+        ]);
 
         $addProduct=Product::create([
 
-            'name'=>$r->productName,
-            'price'=>$r->price,
-            'image'=>$imageName,
-            'floorPlan'=>$fpName,
-            'categoryID'=>$r->categoryID,
+            'name'=>$data['productName'],
+            'price'=>$data['price'],
+            'image'=>$this->storeUpload($request->file('product-image'),'images'),
+            'floorPlan'=>$this->storeUpload($request->file('product-floorPlan'),'floorPlan'),
+            'categoryID'=>(string) $data['categoryID'],
         ]);
         Session::flash('success',"Parking added!");
         return redirect()->route('viewProduct'); //after insert redirect to view product
     }
-    
+
     public function order($id){
 
-        $products=Product::all()->where('id',$id);
-        //select * from products where id='$id'
-        return view('order')->with('products',$products)
+        $product=Product::findOrFail($id);  //404 instead of a blank page for a bad id
+        return view('order')->with('products',[$product])
                                     ->with('categories',Category::all());
-    }
-    public function orderList(){
-        $r=request();
-        $products=Product::find($r->hid); //retrive the record based on id
-        if($r->file('product-image')!=''){
-            $image=$r->file('product-image');
-            $image->move('images',$image->getClientOriginalName()); //images is the local store
-            $imageName=$image->getClientOriginalName(); //upload image
-            $products->image=$imageName; //update product table record
-        }
-
-        $r=request();
-        if($r->file('product-floorPlan')!=''){
-            $floorPlan=$r->file('product-floorPlan');
-            $floorPlan->move('floorPlan',$floorPlan->getClientOriginalName()); //images is the local store
-            $fpName=$floorPlan->getClientOriginalName(); //upload image
-            $products->floorPlan=$fpName; //update product table record
-        }
-        $products->name=$r->productName;
-        $products->price=$r->price;
-        $products->categoryID=$r->categoryID;
-        $products->save();
-
-        return redirect()->route('myCart');
-
     }
 
     public function view(){
-        $product=DB::table('products') 
+        $product=DB::table('products')
         ->leftjoin('categories','categories.id','=','products.categoryID')
         ->select('products.*','categories.id as catid','categories.name as catname')
         ->get();
@@ -90,8 +68,12 @@ class ProductController extends Controller
         $r=request();
         $keyword=$r->keyword;
         $product=DB::table('products')
-        ->where('products.name','like','%'.$keyword.'%') 
-        //select * from products where name like '%$keyword%'
+        ->leftjoin('categories','categories.id','=','products.categoryID')
+        ->select('products.*')
+        ->where('products.name','like','%'.$keyword.'%')
+        ->orWhere('categories.name','like','%'.$keyword.'%')
+        //select products.* from products left join categories on categories.id=products.categoryID
+        //where products.name like '%$keyword%' or categories.name like '%$keyword%'
         ->get();
 
         return view('products')->with('products',$product);
@@ -99,30 +81,31 @@ class ProductController extends Controller
 
     public function edit($id){
 
-        $products=Product::all()->where('id',$id);
-        //select * from products where id='$id'
-        return view('editProduct')->with('products',$products)
+        $product=Product::findOrFail($id);
+        return view('editProduct')->with('products',[$product])
                                     ->with('categories',Category::all());
     }
 
-    public function update(){
-        $r=request();
-        $products=Product::find($r->hid); //retrive the record based on id
-        if($r->file('product-image')!=''){
-            $image=$r->file('product-image');
-            $image->move('images',$image->getClientOriginalName()); //images is the local store
-            $imageName=$image->getClientOriginalName(); //upload image
-            $products->image=$imageName; //update product table record
+    public function update(Request $request){
+        $data=$request->validate([
+            'hid'=>'required|exists:products,id',
+            'productName'=>'required|string|max:255',
+            'price'=>'required|numeric|min:0|max:9999',
+            'categoryID'=>'required|exists:categories,id',
+            'product-image'=>'nullable|'.self::IMAGE_RULES,
+            'product-floorPlan'=>'nullable|'.self::IMAGE_RULES,
+        ]);
+
+        $products=Product::findOrFail($data['hid']);
+        if($request->file('product-image')){
+            $products->image=$this->storeUpload($request->file('product-image'),'images');
         }
-        if($r->file('product-floorPlan')!=''){
-            $floorPlan=$r->file('product-floorPlan');
-            $floorPlan->move('floorPlan',$floorPlan->getClientOriginalName()); //images is the local store
-            $fpName=$floorPlan->getClientOriginalName(); //upload image
-            $products->floorPlan=$fpName; //update product table record
+        if($request->file('product-floorPlan')){
+            $products->floorPlan=$this->storeUpload($request->file('product-floorPlan'),'floorPlan');
         }
-        $products->name=$r->productName;
-        $products->price=$r->price;
-        $products->categoryID=$r->categoryID;
+        $products->name=$data['productName'];
+        $products->price=$data['price'];
+        $products->categoryID=(string) $data['categoryID'];
         $products->save();
         Session::flash('success',"Parking updated successful!");
 
@@ -136,8 +119,21 @@ class ProductController extends Controller
     }
 
     public function delete($id){
-        $delete=Product::find($id);
-        $delete->delete();  //run SQL delete from my_Cart where id=$id
+        $delete=Product::findOrFail($id);
+        $delete->delete();  //run SQL delete from products where id=$id
+        Session::flash('success',"Parking deleted!");
         return redirect()->route('viewProduct');
+    }
+
+    /**
+     * Uploads keep a server-generated name: the client filename let one upload
+     * silently overwrite another (and put the client in control of the extension).
+     */
+    private function storeUpload(UploadedFile $file, string $dir): string
+    {
+        $name=$file->hashName();
+        $file->move(public_path($dir),$name);
+
+        return $name;
     }
 }

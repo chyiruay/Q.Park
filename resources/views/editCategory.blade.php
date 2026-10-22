@@ -7,6 +7,7 @@
         <div class="card" style="background-color:lightgray; margin-bottom:5%;">
         <div class="card-header" style="background-color:lightgray; font-size:40px;">Update Category</div>
         <div class="card-body">
+        @include('partials.alerts')
         <form method="POST" action="{{ route('updateCategory') }}">
             @CSRF
 
@@ -14,7 +15,7 @@
             <input type="hidden" class="form-control" id="hid" name="hid" value="{{$category->id}}">
             <div class="mb-3">
                 <label for="Category Name">Name</label>
-                <input type="text" class="form-control" id="categoryName" name="categoryName" value="{{$category->name}}">
+                <input type="text" class="form-control" id="categoryName" name="categoryName" value="{{ old('categoryName', $category->name) }}" required>
             </div>
 
             @endforeach

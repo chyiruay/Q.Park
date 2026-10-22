@@ -10,13 +10,17 @@ use App\Models\Feedback; //import
 
 class FeedbackController extends Controller
 {
-    public function store(){
-        $r=request(); //request means received the form data by method get or post
-        $addFeedback=Feedback::create([
-            'id'=>$r->feedbackID,  //'id' is  database field name, categoryID is HTML input name
-            'content'=>$r->feedbackContent,
+    public function store(Request $request){
+        //no feedbackID input exists, so the old 'id' => null crashed on a NOT NULL column
+        $data=$request->validate([
+            'feedbackContent'=>'required|string|max:1000',
         ]);
-        return view('welcome'); //after insert redirect to view category
+
+        $addFeedback=Feedback::create([
+            'content'=>$data['feedbackContent'],
+        ]);
+
+        return redirect()->route('insertFeedback')->with('success','Thanks for your feedback!');
     }
 
 

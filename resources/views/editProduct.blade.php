@@ -7,6 +7,7 @@
         <div class="card" style="background-color:lightgray; margin-bottom:5%;">
         <div class="card-header" style="background-color:lightgray; font-size:40px;">Update Parking</div>
         <div class="card-body">
+        @include('partials.alerts')
         <form method="POST" action="{{ route('updateProduct')}}" enctype="multipart/form-data">
             @CSRF
             @foreach($products as $product)
@@ -15,23 +16,23 @@
             <div class="mb-3">
                 <img src="{{asset('images/')}}/{{$product->image}}" alt="" width="200"><img src="{{asset('floorPlan/')}}/{{$product->floorPlan}}" alt="" width="200" style="margin-left:20px;"><br>
                 <label for="Category name">Name</label>
-                <input type="text" class="form-control" id="productName" name="productName" value="{{$product->name}}">
+                <input type="text" class="form-control" id="productName" name="productName" value="{{ old('productName', $product->name) }}" required>
             </div>
 
             <div class="mb-3">
-                <label for="Category price">Price</label>
-                <input type="number" class="form-control" id="price" name="price" min="0" value="{{$product->price}}">
+                <label for="Category price">Price (per hour)</label>
+                <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" value="{{ old('price', $product->price) }}" required>
             </div>
 
             <div class="mb-3">
                 <label for="Category image">Image</label>
-                <input type="file" class="form-control" id="product-image" name="product-image">
+                <input type="file" class="form-control" id="product-image" name="product-image" accept="image/jpeg,image/png,image/webp">
             </div>
-            
+
 
             <div class="mb-3">
                 <label for="Category floorPlan">Floor Plan</label>
-                <input type="file" class="form-control" id="product-floorPlan" name="product-floorPlan">
+                <input type="file" class="form-control" id="product-floorPlan" name="product-floorPlan" accept="image/jpeg,image/png,image/webp">
             </div>
 
             <div class="mb-3">

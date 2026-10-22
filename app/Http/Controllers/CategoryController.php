@@ -19,11 +19,15 @@ class CategoryController extends Controller
         return view('insertCategory')->with('categoryID', $categories);
     }
 
-    public function store(){
-        $r=request(); //request means received the form data by method get or post
+    public function store(Request $request){
+        $data=$request->validate([
+            'categoryID'=>'nullable|integer|min:1|unique:categories,id',
+            'categoryName'=>'required|string|max:255|unique:categories,name',
+        ]);
+
         $addCategory=Category::create([
-            'id'=>$r->categoryID,  //'id' is  database field name, categoryID is HTML input name
-            'name'=>$r->categoryName,
+            'id'=>$data['categoryID'],  //'id' is  database field name, categoryID is HTML input name
+            'name'=>$data['categoryName'],
         ]);
         return redirect()->route('viewCategory'); //after insert redirect to view category
     }
@@ -43,15 +47,18 @@ class CategoryController extends Controller
 
     public function edit($id){
 
-        $category=Category::all()->where('id',$id);
-        //select * from categories where id='$id'
-        return view('editCategory')->with('categories',$category);
+        $category=Category::findOrFail($id);
+        return view('editCategory')->with('categories',[$category]);
     }
-    
-    public function update(){
-        $r=request();
-        $category=Category::find($r->hid); //retrive the record based on id
-        $category->name=$r->categoryName;      
+
+    public function update(Request $request){
+        $data=$request->validate([
+            'hid'=>'required|exists:categories,id',
+            'categoryName'=>'required|string|max:255',
+        ]);
+
+        $category=Category::findOrFail($data['hid']); //retrive the record based on id
+        $category->name=$data['categoryName'];
         $category->save();
         Session::flash('success',"Category updated successful!");
 
@@ -60,8 +67,16 @@ class CategoryController extends Controller
     }
 
     public function delete($id){
-        $delete=Category::find($id);
-        $delete->delete();  //run SQL delete from my_Cart where id=$id
+        $delete=Category::findOrFail($id);
+
+        //products store categoryID as a plain string, so deleting the category
+        //would leave them pointing at nothing and break /viewDetail
+        if(Product::where('categoryID',(string) $delete->id)->exists()){
+            return redirect()->route('viewCategory')
+                ->withErrors('Move or delete this category\'s car parks first.');
+        }
+
+        $delete->delete();  //run SQL delete from categories where id=$id
         return redirect()->route('viewCategory');
     }
 }

@@ -15,11 +15,12 @@
         <br></br>
         <div class="card" style="margin-bottom:50px;">
                 <div class="card-body" style="background-color:lightgray;">
+                    @include('partials.alerts')
                     <form method="POST", action="{{ route('addFeedback')}}">
-                        @CSRF                   
+                        @CSRF
                         <div class="mb-3">
                             <label for="Feedback content"><strong>Tell us how we can improve:</strong></label>
-                            <input type="text" class="form-control" id="feedbackContent" name="feedbackContent" >
+                            <input type="text" class="form-control" id="feedbackContent" name="feedbackContent" value="{{ old('feedbackContent') }}" maxlength="1000" required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="background-color:green; border:green; border-radius:10px;">Submit</button>
                     </form>
