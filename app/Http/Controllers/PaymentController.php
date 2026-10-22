@@ -15,17 +15,34 @@ use PDF;
 
 class PaymentController extends Controller
 {
-    
-    public function _construct(){
-            $this->middleware('auth');
-    }
+    //auth now lives on the routes; the old _construct() typo meant it never ran
 
      public function paymentPost(Request $request)
     {
-      
-	    Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+        $request->validate([
+            'cid'=>'required|array',
+            'cid.*'=>'integer',
+            'stripeToken'=>'required|string',
+        ]);
+
+        //price comes from the products table, never from the posted "sub" field
+        $items=DB::table('my_carts')
+            ->leftjoin('products','products.id','=','my_carts.productID')
+            ->select('my_carts.id as cid','my_carts.quantity as cartQty','products.price')
+            ->whereIn('my_carts.id',$request->input('cid'))
+            ->where('my_carts.orderID','=','')
+            ->where('my_carts.userID','=',Auth::id())
+            ->get();
+
+        if($items->isEmpty()){
+            return back()->withErrors('Those bookings are no longer in your cart.');
+        }
+
+        $amount=$items->sum(fn($item)=>$item->price*$item->cartQty);
+
+	    Stripe\Stripe::setApiKey(config('services.stripe.secret'));
             Stripe\Charge::create ([
-                    "amount" => $request->sub*100,
+                    "amount" => (int) round($amount*100),
                     "currency" => "MYR",
                     "source" => $request->stripeToken,
                     "description" => "Testing payment",
@@ -34,15 +51,12 @@ class PaymentController extends Controller
         $newOrder=myOrder::Create([
             'paymentStatus'=>'Done',    //check any return parameter from Stripe
             'userID'=>Auth::id(),
-            'amount'=>$request->sub,
+            'amount'=>$amount,
         ]);
 
-        $orderID=DB::table('my_orders')->where('userID','=',Auth::id())->orderBy('created_at','desc')->first(); //get the order ID just now created
-           
-        $items=$request->input('cid');
-        foreach($items as $item=>$value){
-            $carts=myCart::find($value);  //get the cart item record
-            $carts->orderID=$orderID->id;  //binding the orderID value with record
+        foreach($items as $item){
+            $carts=myCart::find($item->cid);  //get the cart item record
+            $carts->orderID=$newOrder->id;  //binding the orderID value with record
             $carts->save();
         }
 
