@@ -8,21 +8,19 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * Two known local accounts, both with password "password".
- *
- * NOTE: there is no role column on users, so "admin" here is only a label —
- * the admin pages have no authorisation check and are reachable by anyone.
+ * admin@qpark.test is the only one that can reach /admin.
  */
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
         $users = [
-            ['Admin', 'admin@qpark.test', '0111111111'],
-            ['Test User', 'user@qpark.test', '0122222222'],
+            ['Admin', 'admin@qpark.test', '0111111111', true],
+            ['Test User', 'user@qpark.test', '0122222222', false],
         ];
 
-        foreach ($users as [$name, $email, $phone]) {
-            User::firstOrCreate(
+        foreach ($users as [$name, $email, $phone, $isAdmin]) {
+            $user = User::firstOrCreate(
                 ['email' => $email],
                 [
                     'name' => $name,
@@ -31,6 +29,9 @@ class UserSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]
             );
+
+            $user->isAdmin = $isAdmin;  //not fillable, so set it directly
+            $user->save();
         }
     }
 }

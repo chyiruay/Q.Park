@@ -14,6 +14,8 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
+     * 'isAdmin' is deliberately absent — registration must not be able to set it.
+     *
      * @var array<int, string>
      */
     protected $fillable = [
@@ -41,5 +43,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'isAdmin' => 'boolean',
     ];
 }

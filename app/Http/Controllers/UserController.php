@@ -14,17 +14,6 @@ use Session;
 
 class UserController extends Controller
 {
-    public function store(){
-        $r=request(); //request means received the form data by method get or post
-        $addUser=User::create([
-            'id'=>$r->userID,  //'id' is  database field name, categoryID is HTML input name
-            'name'=>$r->userName,
-            'phone_number'=>$r->userPhoneNumber,
-            'password'=>$r->password,
-        ]);
-        return redirect()->route('showUser'); //after insert redirect to view category
-    }
-
     public function viewAllUser(){
         $user=User::all(); //apply SQL select * from categories
         return view('showUser')->with('user',$user);
@@ -42,28 +31,30 @@ class UserController extends Controller
 
     public function edit($id){
 
-        $user=User::all()->where('id',$id);
-        //select * from categories where id='$id'
-        return view('editProfile')->with('users',$user);
+        //ignore the id in the URL; you may only edit your own profile
+        return view('editProfile')->with('users',[Auth::user()]);
     }
 
-    public function update(){
-        $r=request();
-        $user=User::find($r->hid); //retrive the record based on id
-        $user->name=$r->userName;      
-        $user->email=$r->email;
-        $user->phone_number=$r->phone_number;
+    public function update(Request $request){
+        $user=Auth::user();
+        $data=$request->validate([
+            'userName'=>'required|string|max:255',
+            'email'=>'required|email|max:255|unique:users,email,'.$user->id,
+            'phone_number'=>'required|string|max:20|unique:users,phone_number,'.$user->id,
+        ]);
+
+        $user->name=$data['userName'];
+        $user->email=$data['email'];
+        $user->phone_number=$data['phone_number'];
         $user->save();
         Session::flash('success',"Profile updated successful!");
-        
+
         return redirect()->route('viewProfile');
     }
 
     public function editPassword($id){
 
-        $user=User::all()->where('id',$id);
-        //select * from categories where id='$id'
-        return view('changePassword')->with('users',$user);
+        return view('changePassword')->with('users',[Auth::user()]);
     }
 
     public function updatePassword(Request $request) {
@@ -96,9 +87,15 @@ class UserController extends Controller
         return view('delete')->with('users',$users);
     }
 
-    public function deleteUser($id){
-        $delete=User::find($id);
-        $delete->delete();  //run SQL delete from my_Cart where id=$id
+    /**
+     * Was deleteUser($id) on a GET route — any id, no owner check, fired on a
+     * prefetch. Deletes the signed-in account only.
+     */
+    public function destroyAccount(){
+        $user=Auth::user();
+        Auth::logout();
+        $user->delete();
+
         return redirect()->route('login');
     }
 }

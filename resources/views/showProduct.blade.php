@@ -27,7 +27,7 @@
                         <th>Image</th>
                         <th>Floor Plan</th>
                         <th>Name</th>
-                        <th>Price(per hours)</th>                          
+                        <th>Price (per hour)</th>                          
                         <th>Category</th>           
                         <th>Actions</th>
                     </tr>
@@ -43,7 +43,10 @@
                         <td>{{$product->catname}}</td>
                         <td>         <!-- editProduct.php?id=$product->id -->
                             <a href="{{route('editProduct',['id'=>$product->id])}}" class="edit" title="Edit" data-bs-toggle="tooltip"><i class="material-icons">Edit</i></a><br>
-                            <a href="{{route('deleteProduct',['id'=>$product->id])}}" class="delete" style="color:red"title="Delete" data-bs-toggle="tooltip" onclick="return confirm('Sure Want Delete?')"><i class="material-icons">Delete</i></a>
+                            <form method="POST" action="{{route('deleteProduct',['id'=>$product->id])}}" onsubmit="return confirm('Sure Want Delete?')">
+                                @csrf
+                                <button type="submit" class="btn btn-link p-0 delete" style="color:red">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     @endforeach

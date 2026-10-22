@@ -1,10 +1,6 @@
 @extends('layoutadmin')
 @section('content')
-@if(Session::has('success'))
-    <div class="alert alert-success" role="alert">
-        {{Session::get('success')}}
-    </div>
-@endif
+@include('partials.alerts')
 <div class="row">
     <div class="col-sm-3"></div>
     <div class="col-sm-6">
@@ -35,7 +31,10 @@
                         <td>{{$category->name}}</td>
                         <td>
                             <a href="{{route('editCategory',['id'=>$category->id])}}" class="edit" title="Edit" data-bs-toggle="tooltip"><i class="material-icons">Edit</i></a><br>
-                            <a href="{{route('deleteCategory',['id'=>$category->id])}}" class="delete" style="color:red"title="Delete" data-bs-toggle="tooltip" onclick="return confirm('Sure Want Delete?')"><i class="material-icons">Delete</i></a>
+                            <form method="POST" action="{{route('deleteCategory',['id'=>$category->id])}}" onsubmit="return confirm('Sure Want Delete?')">
+                                @csrf
+                                <button type="submit" class="btn btn-link p-0 delete" style="color:red">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     @endforeach

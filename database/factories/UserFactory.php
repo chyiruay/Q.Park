@@ -34,6 +34,15 @@ class UserFactory extends Factory
     }
 
     /**
+     * isAdmin is not mass assignable, so set it after the model exists.
+     */
+    public function admin(): static
+    {
+        return $this->afterMaking(fn ($user) => $user->forceFill(['isAdmin' => true]))
+            ->afterCreating(fn ($user) => $user->forceFill(['isAdmin' => true])->save());
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static
