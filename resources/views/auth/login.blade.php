@@ -17,6 +17,11 @@
             </p>
         </div>
 
+        {{-- set by Authenticate when a guest is bounced off a page that needs login --}}
+        @if (session('notice'))
+            <div class="alert alert-info" role="alert">{{ session('notice') }}</div>
+        @endif
+
         <form method="POST" action="{{ $adminLogin ? route('admin.login') : route('login') }}" novalidate>
             @csrf
 

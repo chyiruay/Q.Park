@@ -102,6 +102,28 @@ class AccessControlTest extends TestCase
         }
     }
 
+    public function test_a_guest_clicking_a_car_park_is_told_why_they_landed_on_login()
+    {
+        $product = Product::factory()->create();
+
+        $this->get('/order/'.$product->id)
+            ->assertRedirect('/login')
+            ->assertSessionHas('notice');
+
+        $this->get('/login')->assertSee('you need an account to book a parking space', false);
+    }
+
+    public function test_logging_in_returns_a_guest_to_the_car_park_they_clicked()
+    {
+        $product = Product::factory()->create();
+        $customer = User::factory()->create();
+
+        $this->get('/order/'.$product->id)->assertRedirect('/login');
+
+        $this->post('/login', ['email' => $customer->email, 'password' => 'password'])
+            ->assertRedirect('/order/'.$product->id);
+    }
+
     public function test_deletes_are_not_reachable_by_get()
     {
         $product = Product::factory()->create();
