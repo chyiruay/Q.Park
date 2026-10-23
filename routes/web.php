@@ -17,9 +17,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-/* Public */
-Route::get('/', function () {
-    return view('welcome');
+/* Public shopfront. 'customer' sends a signed-in admin to /admin instead;
+   guests and customers pass straight through. */
+Route::middleware('customer')->group(function () {
+    Route::get('/', function () {
+        return view('welcome');
+    });
+
+    Route::get('/help', [App\Http\Controllers\HelpController::class, 'index'])->name('Help');
+    Route::get('/products', [App\Http\Controllers\ProductController::class, 'viewAll'])->name('Product');
+    Route::get('/viewDetail/{id}', [App\Http\Controllers\ProductController::class, 'productDetail'])->name('viewDetail');
+    Route::post('/product', [App\Http\Controllers\ProductController::class, 'searchProduct'])->name('search.product');
 });
 
 /* Separate admin sign-in. LoginController::credentials() reads the path, so each
@@ -27,12 +35,7 @@ Route::get('/', function () {
 Route::get('/admin/login', [App\Http\Controllers\Auth\LoginController::class, 'showAdminLoginForm'])->name('admin.login');
 Route::post('/admin/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
 
-Route::get('/help', [App\Http\Controllers\HelpController::class, 'index'])->name('Help');
-Route::get('/products', [App\Http\Controllers\ProductController::class, 'viewAll'])->name('Product');
-Route::get('/viewDetail/{id}', [App\Http\Controllers\ProductController::class, 'productDetail'])->name('viewDetail');
-Route::post('/product', [App\Http\Controllers\ProductController::class, 'searchProduct'])->name('search.product');
-
-/* Signed-in customers */
+/* Any signed-in account: admins manage their own profile too. */
 Route::middleware('auth')->group(function () {
     Route::get('/viewProfile', [App\Http\Controllers\UserController::class, 'showUser'])->name('viewProfile');
     Route::get('/editProfile/{id}', [App\Http\Controllers\UserController::class, 'edit'])->name('editProfile');
@@ -41,7 +44,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/updatePassword', [App\Http\Controllers\UserController::class, 'updatePassword'])->name('updatePassword');
     Route::get('/deleteAccount', [App\Http\Controllers\UserController::class, 'deleteAccount'])->name('deleteAccount');
     Route::post('/deleteAccount', [App\Http\Controllers\UserController::class, 'destroyAccount'])->name('deleteUser');
+});
 
+/* Booking and payment: customers only. */
+Route::middleware(['auth', 'customer'])->group(function () {
     Route::get('/order/{id}', [App\Http\Controllers\ProductController::class, 'order'])->name('Order');
 
     Route::get('/insertFeedback', [App\Http\Controllers\FeedbackController::class, 'index'])->name('insertFeedback');
@@ -81,4 +87,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])
+    ->middleware(['auth', 'customer'])
+    ->name('home');

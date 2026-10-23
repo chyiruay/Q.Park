@@ -46,6 +46,55 @@ class AccessControlTest extends TestCase
         $this->actingAs(User::factory()->create())->get($url)->assertStatus(403);
     }
 
+    public function test_admins_are_bounced_out_of_the_customer_area()
+    {
+        $admin = User::factory()->admin()->create();
+        $product = Product::factory()->create();
+
+        $urls = ['/', '/help', '/products', '/viewDetail/'.$product->categoryID,
+                 '/home', '/order/'.$product->id, '/myCart', '/myOrder', '/insertFeedback'];
+
+        foreach ($urls as $url) {
+            $this->actingAs($admin)->get($url)->assertRedirect(route('admin'), 302, $url);
+        }
+
+        $this->actingAs($admin)->post('/product', ['keyword' => 'hotel'])
+            ->assertRedirect(route('admin'));
+    }
+
+    public function test_admins_keep_their_own_profile_pages()
+    {
+        $admin = User::factory()->admin()->create();
+
+        foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id, '/deleteAccount'] as $url) {
+            $this->actingAs($admin)->get($url)->assertStatus(200, $url);
+        }
+    }
+
+    public function test_customers_still_reach_the_shopfront()
+    {
+        $customer = User::factory()->create();
+        $product = Product::factory()->create();
+
+        foreach (['/', '/help', '/products', '/home', '/order/'.$product->id, '/myCart'] as $url) {
+            $this->actingAs($customer)->get($url)->assertStatus(200, $url);
+        }
+    }
+
+    public function test_guests_still_reach_the_public_shopfront()
+    {
+        foreach (['/', '/help', '/products'] as $url) {
+            $this->get($url)->assertStatus(200, $url);
+        }
+    }
+
+    public function test_signed_in_admin_visiting_login_lands_on_the_dashboard()
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->get('/login')
+            ->assertRedirect(route('admin'));
+    }
+
     public function test_customer_pages_are_closed_to_guests()
     {
         foreach (['/myCart', '/myOrder', '/viewProfile', '/deleteAccount'] as $url) {
