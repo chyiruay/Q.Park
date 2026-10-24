@@ -34,7 +34,12 @@ class CategoryController extends Controller
 
 
     public function view(){
-        $category=Category::all(); //apply SQL select * from categories
+        // products.categoryID is a string, so count by hand instead of a relationship.
+        $category=Category::query()
+        ->select('categories.*')
+        ->selectSub(DB::table('products')->selectRaw('count(*)')->whereColumn('products.categoryID','categories.id'),'productCount')
+        ->orderBy('id')
+        ->get();
         return view('showCategory')->with('categories',$category);
     }
 

@@ -1,0 +1,169 @@
+// Admin dashboard (admin.blade.php). Same glass card as the auth pages.
+
+$qpark-green: #1a8f4c;
+$qpark-green-dark: #146c3a;
+
+.admin-dash {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.admin-dash__head {
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0 2px 1rem rgba(0, 0, 0, 0.45);
+
+    h1 {
+        margin-bottom: 0.4rem;
+        font-size: clamp(1.9rem, 5vw, 2.75rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    p {
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.88);
+    }
+}
+
+.admin-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem 1.5rem 1.25rem;
+    border-radius: 1rem;
+    border-top: 4px solid $qpark-green;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.3);
+    color: #212529;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        color: #212529;
+        transform: translateY(-4px);
+        box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.4);
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba($qpark-green, 0.6);
+        outline-offset: 2px;
+    }
+}
+
+.admin-card__title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $qpark-green-dark;
+}
+
+.admin-card__count {
+    margin-top: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.admin-card__unit {
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: #5b6470;
+}
+
+.admin-card__text {
+    margin-top: auto;
+    padding-top: 1rem;
+    font-size: 0.875rem;
+    color: #5b6470;
+}
+
+// List pages (showUser, ...): one glass panel holding a table.
+.admin-panel {
+    padding: 1.25rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.3);
+
+    .table {
+        font-size: 0.925rem;
+
+        th {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #5b6470;
+            white-space: nowrap;
+        }
+
+        a {
+            color: $qpark-green-dark;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
+.admin-panel__empty {
+    margin: 0;
+    padding: 2rem 0;
+    text-align: center;
+    color: #5b6470;
+}
+
+// Add/edit forms (editProduct, ...): a narrower column holding one panel.
+.admin-form {
+    max-width: 44rem;
+    margin: 0 auto;
+}
+
+// Single-field forms (editCategory, ...).
+.admin-form--narrow {
+    max-width: 30rem;
+}
+
+.admin-upload-preview {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    margin-bottom: 0.5rem;
+    object-fit: cover;
+    border-radius: 0.6rem;
+    background: #e9ecef;
+}
+
+.admin-thumb {
+    width: 4.5rem;
+    height: 3rem;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    background: #e9ecef;
+}
+
+.admin-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+.admin-badge--customer {
+    color: $qpark-green-dark;
+    background: rgba($qpark-green, 0.12);
+}

@@ -108,6 +108,29 @@ class FormValidationTest extends TestCase
         $this->assertSame('More bays please', Feedback::firstOrFail()->content);
     }
 
+    public function test_password_change_needs_the_current_password()
+    {
+        $user = User::factory()->create();   // factory password is "password"
+        $new = ['new-password' => 'newsecret1', 'new-password_confirmation' => 'newsecret1'];
+
+        $this->actingAs($user)->post('/updatePassword', ['current-password' => 'wrong'] + $new)
+            ->assertSessionHasErrors('current-password');
+        $this->assertTrue(\Hash::check('password', $user->fresh()->password));
+
+        $this->actingAs($user)->post('/updatePassword', ['current-password' => 'password'] + $new)
+            ->assertSessionHasNoErrors();
+        $this->assertTrue(\Hash::check('newsecret1', $user->fresh()->password));
+    }
+
+    public function test_feedback_longer_than_the_column_is_rejected()
+    {
+        $this->actingAs(User::factory()->create())
+            ->post('/insertFeedback/store', ['feedbackContent' => str_repeat('a', 256)])
+            ->assertSessionHasErrors('feedbackContent');
+
+        $this->assertSame(0, Feedback::count());
+    }
+
     public function test_booking_rejects_a_space_that_does_not_exist()
     {
         $this->actingAs(User::factory()->create())

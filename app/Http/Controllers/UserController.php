@@ -15,24 +15,18 @@ use Session;
 class UserController extends Controller
 {
     public function viewAllUser(){
-        $user=User::all(); //apply SQL select * from categories
-        return view('showUser')->with('user',$user);
+        $users=User::orderBy('id')->get();
+        return view('showUser')->with('users',$users);
     }
 
     public function showUser(){
-        $users=DB::table('users')
-
-        ->select('users.id','users.name','users.email','users.phone_number')
-        ->where('users.id','=',Auth::id())
-        //->get();
-        ->paginate(9);
-        return view('showProfile')->with('users',$users);
+        return view('showProfile')->with('user',Auth::user());
     }
 
     public function edit($id){
 
         //ignore the id in the URL; you may only edit your own profile
-        return view('editProfile')->with('users',[Auth::user()]);
+        return view('editProfile')->with('user',Auth::user());
     }
 
     public function update(Request $request){
@@ -54,17 +48,15 @@ class UserController extends Controller
 
     public function editPassword($id){
 
-        return view('changePassword')->with('users',[Auth::user()]);
+        return view('changePassword');
     }
 
     public function updatePassword(Request $request) {
         if (!(Hash::check($request->get('current-password'), Auth::user()->password))) {
-            // The passwords matches
-            return redirect()->back()->with("error","Your current password does not matches with the password.");
+            return redirect()->back()->withErrors(['current-password'=>'Your current password is incorrect.']);
         }
         if(strcmp($request->get('current-password'), $request->get('new-password')) == 0){
-            // Current password and new password same
-            return redirect()->back()->with("error","New Password cannot be same as your current password.");
+            return redirect()->back()->withErrors(['new-password'=>'New password cannot be the same as your current password.']);
         }
         $validatedData = $request->validate([
             'current-password' => 'required',
@@ -75,16 +67,6 @@ class UserController extends Controller
         $user->password = bcrypt($request->get('new-password'));
         $user->save();
         return redirect()->back()->with("success","Password successfully changed!");
-    }
-
-    public function deleteAccount(){
-        $users=DB::table('users')
-
-        ->select('users.id','users.name','users.email','users.phone_number')
-        ->where('users.id','=',Auth::id())
-        //->get();
-        ->paginate(9);
-        return view('delete')->with('users',$users);
     }
 
     /**

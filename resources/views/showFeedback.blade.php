@@ -1,46 +1,36 @@
 @extends('layoutadmin')
+
 @section('content')
-<div class="row">
-    <div class="col-sm-1"></div>
-    <div class="col-sm-10">
-        <br></br>
-        <div class="panel panel-default">
-            <div class="table-wrapper">
-                <div class="table-title">
-                    <div class="row">
-                        <div class="col-sm-8" style="color:white;"><h2>Feedback <b>List</b></h2></div>
-                    </div>
-                </div>
-                <div class="panel-body">
-                    @if (session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    <table class="table table-bordered" style="background-color:lightgray;">
-                        <thead>
+<div class="container admin-dash">
+    <div class="admin-dash__head">
+        <h1>Feedback</h1>
+        <p>{{ $feedback->count() }} {{ Str::plural('message', $feedback->count()) }} received.</p>
+    </div>
+
+    @include('partials.alerts')
+    <div class="admin-panel">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Message</th>
+                            <th scope="col" class="text-end">Received</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($feedback as $item)
                             <tr>
-                                <th>ID</th>
-                                <th>Content</th>   
+                                <td class="text-muted">{{ $item->id }}</td>
+                                <td class="text-break">{{ $item->content }}</td>
+                                <td class="text-end text-muted text-nowrap">{{ $item->created_at?->format('d M Y, h:i A') }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($feedback as $feedback)
-                            <tr>
-                                <td>{{$feedback->id}}</td>
-                                <td>{{$feedback->content}}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @empty
+                            <tr><td colspan="3" class="admin-panel__empty">No feedback yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        </div>
     </div>
 </div>
-    </div>
-    <div class="col-sm-1"></div>
-</div>
-
-
 @endsection

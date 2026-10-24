@@ -42,7 +42,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/updateProfile', [App\Http\Controllers\UserController::class, 'update'])->name('updateProfile');
     Route::get('/editPassword/{id}', [App\Http\Controllers\UserController::class, 'editPassword'])->name('editPassword');
     Route::post('/updatePassword', [App\Http\Controllers\UserController::class, 'updatePassword'])->name('updatePassword');
-    Route::get('/deleteAccount', [App\Http\Controllers\UserController::class, 'deleteAccount'])->name('deleteAccount');
     Route::post('/deleteAccount', [App\Http\Controllers\UserController::class, 'destroyAccount'])->name('deleteUser');
 });
 

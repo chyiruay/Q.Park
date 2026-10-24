@@ -63,42 +63,6 @@
         border-color: #90ee90;
         background: #218838;
     }
-    .admin-btn {
-        display: block;
-        background-color: #2c2c2c; 
-        border: 2px solid #444;   
-        border-radius: 15px;     
-        padding: 40px 20px;
-        text-align: center;
-        text-decoration: none !important;
-        transition: all 0.3s ease; 
-        color: white;
-        height: 100%;
-    }
-
-    .admin-btn:hover {
-        background-color: #28a745; 
-        border-color: #90ee90;     
-    }
-
-    .btn-content strong {
-        display: block;
-        font-size: 22px;
-        letter-spacing: 1.5px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        color: #fff;
-    }
-
-    .btn-content small {
-        display: block;
-        color: #bbb; /* 默认灰色文字 */
-        font-size: 13px;
-    }
-
-    .admin-btn:hover small {
-        color: rgba(255, 255, 255, 0.9);
-    }
     </style>
   </head>
   <body>

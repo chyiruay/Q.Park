@@ -175,4 +175,27 @@ class BookingTest extends TestCase
             ->assertSee('A3')
             ->assertSee('10:00');
     }
+
+    public function test_my_orders_lists_the_paid_bookings_of_that_user_only()
+    {
+        $product = Product::factory()->create(['name' => 'Sunway Pyramid']);
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        $order = \App\Models\myOrder::create(['paymentStatus' => 'Done', 'userID' => $user->id, 'amount' => 10]);
+        myCart::create([
+            'orderID' => $order->id, 'userID' => $user->id, 'date' => now()->addDay()->toDateString(),
+            'startTime' => '09:00', 'space' => 'B7', 'quantity' => 2, 'productID' => $product->id,
+        ]);
+
+        $this->actingAs($user)->get('/myOrder')
+            ->assertStatus(200)
+            ->assertSee('Sunway Pyramid')
+            ->assertSee('B7')
+            ->assertSee('RM 10.00');
+
+        $this->actingAs($other)->get('/myOrder')
+            ->assertStatus(200)
+            ->assertDontSee('Sunway Pyramid');
+    }
 }

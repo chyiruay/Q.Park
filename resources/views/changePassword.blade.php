@@ -1,69 +1,72 @@
 @extends('layout')
+
 @section('content')
-<div class="row">
-    <div class="col-sm-3"></div>
-    <div class="col-sm-6">
-        <br></br>
-        <div class="card" style="background-color:lightgray; margin-bottom:50px;">
-            <div class="panel panel-default">
-            <div class="card-header" style="background-color:lightgray; font-size:40px;">Change Password</div>
-                <div class="panel-body">
-                    @if (session('error'))
-                        <div class="alert alert-danger">
-                            {{ session('error') }}
-                        </div>
-                    @endif
-                    @if (session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    @if($errors)
-                        @foreach ($errors->all() as $error)
-                            <div class="alert alert-danger">{{ $error }}</div>
-                        @endforeach
-                    @endif
-                    <form class="form-horizontal" method="POST" action="{{ route('updatePassword') }}">
-                        {{ csrf_field() }}
-                        <div class="mb-3{{ $errors->has('current-password') ? ' has-error' : '' }}">
-                            <label for="new-password" class="col-md-4 control-label">Current Password :</label>
-                            <div class="col-md-12">
-                                <input id="current-password" type="password" class="form-control" name="current-password" required>
-                                @if ($errors->has('current-password'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('current-password') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="mb-3{{ $errors->has('new-password') ? ' has-error' : '' }}">
-                            <label for="new-password" class="col-md-4 control-label">New Password :</label>
-                            <div class="col-md-12">
-                                <input id="new-password" type="password" class="form-control" name="new-password" required>
-                                @if ($errors->has('new-password'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('new-password') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new-password-confirm" class="col-md-4 control-label">Confirm New Password :</label>
-                            <div class="col-md-12">
-                                <input id="new-password-confirm" type="password" class="form-control" name="new-password_confirmation" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                        <div class="col-md-12 col-md-offset-4" style="text-align:right;">
-                                <button type="submit" class="btn btn-primary" style="border:1px solid green; border-radius:20px; background-color:green;">
-                                    Change Password
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-brand">
+            <h1>{{ __('Change Password') }}</h1>
+            <p>{{ __('Use at least 8 characters for your new password.') }}</p>
         </div>
+
+        {{-- field errors show under each input, so only the flash messages go here --}}
+        @if (session('success'))
+            <div class="alert alert-success" role="alert">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('updatePassword') }}" novalidate>
+            @csrf
+
+            <div class="form-floating mb-3">
+                <input id="current-password"
+                       type="password"
+                       name="current-password"
+                       class="form-control @error('current-password') is-invalid @enderror"
+                       placeholder="{{ __('Current Password') }}"
+                       required
+                       autocomplete="current-password"
+                       autofocus>
+                <label for="current-password">{{ __('Current Password') }}</label>
+
+                @error('current-password')
+                    <span class="invalid-feedback" role="alert">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="form-floating mb-3">
+                <input id="new-password"
+                       type="password"
+                       name="new-password"
+                       class="form-control @error('new-password') is-invalid @enderror"
+                       placeholder="{{ __('New Password') }}"
+                       required
+                       minlength="8"
+                       autocomplete="new-password">
+                <label for="new-password">{{ __('New Password') }}</label>
+
+                @error('new-password')
+                    <span class="invalid-feedback" role="alert">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="form-floating mb-4">
+                <input id="new-password-confirm"
+                       type="password"
+                       name="new-password_confirmation"
+                       class="form-control"
+                       placeholder="{{ __('Confirm New Password') }}"
+                       required
+                       autocomplete="new-password">
+                <label for="new-password-confirm">{{ __('Confirm New Password') }}</label>
+            </div>
+
+            <button type="submit" class="btn btn-qpark w-100 mb-2">{{ __('Change Password') }}</button>
+            <a href="{{ route('viewProfile') }}" class="btn btn-outline-secondary w-100">{{ __('Cancel') }}</a>
+        </form>
+
     </div>
 </div>
 @endsection

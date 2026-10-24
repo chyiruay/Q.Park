@@ -70,24 +70,38 @@ class PaymentController extends Controller
     public function showOrder(){
         $orders=DB::table('my_orders')
 
-        ->select('my_orders.id','my_orders.amount','my_orders.created_at')
+        ->select('my_orders.id','my_orders.amount','my_orders.paymentStatus','my_orders.created_at')
         ->where('my_orders.userID','=',Auth::id())
-        //->get();
+        ->orderByDesc('my_orders.id')
         ->paginate(6);
-        return view('myOrder')->with('orders',$orders);
+
+        //the bookings each order paid for, keyed by order id
+        $bookings=DB::table('my_carts')
+        ->leftjoin('products','products.id','=','my_carts.productID')
+        ->select('my_carts.orderID','my_carts.space','my_carts.date','my_carts.startTime','my_carts.quantity','products.name')
+        ->whereIn('my_carts.orderID',$orders->pluck('id'))
+        ->where('my_carts.userID','=',Auth::id())
+        ->get()
+        ->groupBy('orderID');
+
+        return view('myOrder')->with(['orders'=>$orders,'bookings'=>$bookings]);
     }
 
     public function showAllOrder(){
         $orders=DB::table('my_orders')
+        ->leftjoin('users','users.id','=','my_orders.userID')
+        ->select('my_orders.id','my_orders.userID','my_orders.amount','my_orders.paymentStatus','my_orders.created_at','users.name','users.email')
+        ->orderByDesc('my_orders.id')
+        ->paginate(10);
 
-        ->select('my_orders.id','my_orders.userID','my_orders.amount','my_orders.created_at')
-        ->paginate(6);
-
-        return view('showAllOrder')->with('orders',$orders);
+        return view('showAllOrder')->with([
+            'orders'=>$orders,
+            'revenue'=>DB::table('my_orders')->sum('amount'),
+        ]);
     }
 
     public function pdfReport(){
-        $orders = DB::table('my_Orders')
+        $orders = DB::table('my_orders')
         ->select('my_orders.id','my_orders.userID','my_orders.amount','my_orders.created_at')
         ->get();
         $pdf=PDF::loadView('salesReport',compact('orders'));

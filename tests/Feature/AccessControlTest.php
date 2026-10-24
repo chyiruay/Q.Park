@@ -66,7 +66,7 @@ class AccessControlTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id, '/deleteAccount'] as $url) {
+        foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id] as $url) {
             $this->actingAs($admin)->get($url)->assertStatus(200, $url);
         }
     }
@@ -97,9 +97,11 @@ class AccessControlTest extends TestCase
 
     public function test_customer_pages_are_closed_to_guests()
     {
-        foreach (['/myCart', '/myOrder', '/viewProfile', '/deleteAccount'] as $url) {
+        foreach (['/myCart', '/myOrder', '/viewProfile'] as $url) {
             $this->get($url)->assertRedirect('/login');
         }
+
+        $this->post('/deleteAccount')->assertRedirect('/login');
     }
 
     public function test_a_guest_clicking_a_car_park_is_told_why_they_landed_on_login()

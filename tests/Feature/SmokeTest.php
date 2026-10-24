@@ -49,7 +49,6 @@ class SmokeTest extends TestCase
             '/viewProfile',
             '/editProfile/'.$customer->id,
             '/editPassword/'.$customer->id,
-            '/deleteAccount',
         ];
 
         foreach ($urls as $url) {
@@ -61,7 +60,7 @@ class SmokeTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id, '/deleteAccount'] as $url) {
+        foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id] as $url) {
             $this->actingAs($admin)->get($url)
                 ->assertStatus(200, $url)
                 ->assertSee('bg_admin.jpg')

@@ -1,31 +1,33 @@
 @extends('layoutadmin')
-@section('content')
-<div class="row">
-    <div class="col-sm-3"></div>
-    <div class="col-sm-6">
-        <br></br>
-        <div class="card" style="background-color:lightgray; margin-bottom:5%;">
-        <div class="card-header" style="background-color:lightgray; font-size:40px;">Update Category</div>
-        <div class="card-body">
-        @include('partials.alerts')
-        <form method="POST" action="{{ route('updateCategory') }}">
-            @CSRF
 
-            @foreach($categories as $category)
-            <input type="hidden" class="form-control" id="hid" name="hid" value="{{$category->id}}">
-            <div class="mb-3">
-                <label for="Category Name">Name</label>
-                <input type="text" class="form-control" id="categoryName" name="categoryName" value="{{ old('categoryName', $category->name) }}" required>
+@section('content')
+@foreach ($categories as $category)
+<div class="container admin-dash">
+    <div class="admin-dash__head">
+        <h1>Edit Category</h1>
+        <p>{{ $category->name }}</p>
+    </div>
+
+    <div class="admin-form admin-form--narrow">
+        @include('partials.alerts')
+
+        <form method="POST" action="{{ route('updateCategory') }}" class="admin-panel" novalidate>
+            @csrf
+            <input type="hidden" name="hid" value="{{ $category->id }}">
+
+            <div class="mb-4">
+                <label for="categoryName" class="form-label fw-semibold">Name</label>
+                <input type="text" id="categoryName" name="categoryName"
+                       class="form-control @error('categoryName') is-invalid @enderror"
+                       value="{{ old('categoryName', $category->name) }}" maxlength="255" required autofocus>
             </div>
 
-            @endforeach
-            <button type="submit" class="btn btn-primary">Update</button>
+            <div class="d-flex flex-column flex-sm-row-reverse gap-2">
+                <button type="submit" class="btn btn-qpark flex-sm-fill">Save Changes</button>
+                <a href="{{ route('viewCategory') }}" class="btn btn-outline-secondary flex-sm-fill">Cancel</a>
+            </div>
         </form>
-        <br></br>
-</div>
-</div>
     </div>
-    <div class="col-sm-3"></div>
 </div>
-
+@endforeach
 @endsection

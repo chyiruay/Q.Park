@@ -13,7 +13,7 @@ class FeedbackController extends Controller
     public function store(Request $request){
         //no feedbackID input exists, so the old 'id' => null crashed on a NOT NULL column
         $data=$request->validate([
-            'feedbackContent'=>'required|string|max:1000',
+            'feedbackContent'=>'required|string|max:255',  //feedback.content is a varchar(255)
         ]);
 
         $addFeedback=Feedback::create([
@@ -25,7 +25,7 @@ class FeedbackController extends Controller
 
 
     public function view(){
-        $feedback=Feedback::all(); //apply SQL select * from categories
+        $feedback=Feedback::orderByDesc('id')->get();
         return view('showFeedback')->with('feedback',$feedback);
     }
 

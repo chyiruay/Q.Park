@@ -1,35 +1,43 @@
 @extends('layout')
+
 @section('content')
+<div class="auth-wrapper">
+    <div class="auth-card booking-card">
 
-<div class="row">
-<div class="col-sm-1"></div>
-<div class="col-sm-10">
-<div class="card" style="background-color:lightpink; text-align:center; margin-top:3%; font-size:120%;">
-    <div class="card-body">
-        <strong>We value your feedback</strong>
-    </div>
-</div>
-</div>
-    <div class="col-sm-2"></div>
-    <div class="col-sm-8">
-        <br></br>
-        <div class="card" style="margin-bottom:50px;">
-                <div class="card-body" style="background-color:lightgray;">
-                    @include('partials.alerts')
-                    <form method="POST", action="{{ route('addFeedback')}}">
-                        @CSRF
-                        <div class="mb-3">
-                            <label for="Feedback content"><strong>Tell us how we can improve:</strong></label>
-                            <input type="text" class="form-control" id="feedbackContent" name="feedbackContent" value="{{ old('feedbackContent') }}" maxlength="1000" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="background-color:green; border:green; border-radius:10px;">Submit</button>
-                    </form>
-                </div>
-            </div>
+        <div class="auth-brand">
+            <h1>{{ __('We value your feedback') }}</h1>
+            <p>{{ __('Tell us how we can make parking with Quick Park better.') }}</p>
         </div>
-        <br></br>
+
+        @include('partials.alerts')
+
+        <form method="POST" action="{{ route('addFeedback') }}" novalidate>
+            @csrf
+
+            <div class="form-floating mb-1">
+                <textarea id="feedbackContent"
+                          name="feedbackContent"
+                          class="form-control feedback-text @error('feedbackContent') is-invalid @enderror"
+                          placeholder="{{ __('Your feedback') }}"
+                          maxlength="255"
+                          required>{{ old('feedbackContent') }}</textarea>
+                <label for="feedbackContent">{{ __('How can we improve?') }}</label>
+            </div>
+            <div class="form-text text-end mb-3"><span id="feedback-count">0</span> / 255</div>
+
+            <button type="submit" class="btn btn-qpark w-100">{{ __('Send Feedback') }}</button>
+        </form>
+
     </div>
-    <div class="col-sm-3"></div>
 </div>
 
+<script>
+    (function () {
+        var box = document.getElementById('feedbackContent');
+        var count = document.getElementById('feedback-count');
+        function update() { count.textContent = box.value.length; }
+        box.addEventListener('input', update);
+        update();
+    })();
+</script>
 @endsection

@@ -136,3 +136,58 @@ $qpark-green-dark: #146c3a;
     text-align: center;
     color: rgba(255, 255, 255, 0.85);
 }
+
+// Booking form (order.blade.php) — a wider .auth-card.
+.booking-card {
+    max-width: 38rem;
+}
+
+.booking-photos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+
+    figure {
+        margin: 0;
+    }
+
+    img {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        border-radius: 0.6rem;
+        background: #e9ecef;
+    }
+
+    a img {
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 0.85;
+        }
+    }
+
+    figcaption {
+        margin-top: 0.35rem;
+        font-size: 0.8rem;
+        text-align: center;
+        color: #5b6470;
+    }
+}
+
+.booking-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba($qpark-green, 0.1);
+    color: #5b6470;
+
+    strong {
+        font-size: 1.35rem;
+        color: $qpark-green-dark;
+    }
+}

@@ -98,6 +98,54 @@ $qpark-green-dark: #146c3a;
     }
 }
 
+// Feedback form (insertFeedback.blade.php): floating label over a taller textarea.
+.feedback-text.form-control {
+    height: 10rem;
+    resize: vertical;
+}
+
+// Profile page (showProfile.blade.php) reuses the auth card.
+.profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    margin: 0 auto 0.75rem;
+    border-radius: 50%;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    background: $qpark-green;
+}
+
+.profile-details {
+    margin-bottom: 1.5rem;
+    padding: 0.25rem 1rem;
+    border-radius: 0.75rem;
+    background: #f4f6f8;
+
+    dt {
+        padding-top: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #5b6470;
+    }
+
+    dd {
+        margin-bottom: 0;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e3e7eb;
+        overflow-wrap: anywhere;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+    }
+}
+
 .auth-footer {
     margin: 1.5rem 0 0;
     text-align: center;
