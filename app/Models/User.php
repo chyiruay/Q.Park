@@ -45,4 +45,10 @@ class User extends Authenticatable
         'password' => 'hashed',
         'isAdmin' => 'boolean',
     ];
+
+    public function feedback(){
+
+        return $this->hasMany(Feedback::class, 'userID');
+        
+    }
 }

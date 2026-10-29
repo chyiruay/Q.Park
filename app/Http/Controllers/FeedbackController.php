@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use DB;
 
@@ -18,6 +19,7 @@ class FeedbackController extends Controller
 
         $addFeedback=Feedback::create([
             'content'=>$data['feedbackContent'],
+            'userID'=>Auth::id()
         ]);
 
         return redirect()->route('insertFeedback')->with('success','Thanks for your feedback!');
@@ -25,7 +27,7 @@ class FeedbackController extends Controller
 
 
     public function view(){
-        $feedback=Feedback::orderByDesc('id')->get();
+        $feedback=Feedback::with('user')->orderByDesc('id')->get();
         return view('showFeedback')->with('feedback',$feedback);
     }
 

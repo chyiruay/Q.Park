@@ -23,9 +23,10 @@ class Product extends Model
         return array_map(fn ($n) => 'A'.$n, range(1, 36));
     }
 
+    //'categoryID', not Laravel's category_id, so the key has to be named explicitly
     public function category(){
 
-        return $this->belongsTo('App\Models\Category');
+        return $this->belongsTo(Category::class, 'categoryID');
 
     }
 }

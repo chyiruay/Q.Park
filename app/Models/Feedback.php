@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Feedback extends Model
 {
     use HasFactory;
-    protected $fillable=['content'];
+    protected $fillable=['content','userID'];
 
     public function user(){
 
-        return $this->hasMany('App\Models\User');
+        return $this->belongsTo(User::class, 'userID');
 
     }
 }

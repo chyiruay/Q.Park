@@ -10,9 +10,10 @@ class Category extends Model
     use HasFactory;
     protected $fillable=['name'];
 
+    //'categoryID', not Laravel's category_id, so the key has to be named explicitly
     public function product(){
 
-        return $this->hasMany('App\Models\Product');
+        return $this->hasMany(Product::class, 'categoryID');
 
     }
 }
