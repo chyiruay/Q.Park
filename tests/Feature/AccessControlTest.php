@@ -7,6 +7,7 @@ use App\Models\Feedback;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\myCart;
+use App\Models\myOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -228,5 +229,58 @@ class AccessControlTest extends TestCase
             ->assertStatus(404);
 
         $this->assertModelExists($item);
+    }
+
+    /**
+     * Deleting a paid row took away a booking the customer had paid for, left the
+     * order's total above the rows it listed, and released the space for resale.
+     */
+    public function test_a_paid_booking_cannot_be_deleted_from_the_cart()
+    {
+        $owner = User::factory()->create();
+        $order = myOrder::create(['paymentStatus' => 'paid', 'userID' => (string) $owner->id, 'amount' => 22.50]);
+
+        $paid = myCart::create([
+            'orderID' => (string) $order->id,
+            'userID' => (string) $owner->id,
+            'date' => now()->addDays(7)->toDateString(),
+            'startTime' => '10:00',
+            'space' => 'A6',
+            'quantity' => 3,
+            'productID' => (string) Product::factory()->create()->id,
+        ]);
+
+        // even the owner, who paid for it, must not be able to remove it
+        $this->actingAs($owner)->post('/deleteItem/'.$paid->id)->assertStatus(404);
+
+        $this->assertModelExists($paid);
+        $this->assertSame((string) $order->id, $paid->fresh()->orderID);
+    }
+
+    /** The space a paid booking holds must stay unavailable to everyone else. */
+    public function test_a_paid_space_cannot_be_freed_then_rebooked()
+    {
+        $owner = User::factory()->create();
+        $product = Product::factory()->create();
+        $order = myOrder::create(['paymentStatus' => 'paid', 'userID' => (string) $owner->id, 'amount' => 9.00]);
+        $date = now()->addDays(7)->toDateString();
+
+        $paid = myCart::create([
+            'orderID' => (string) $order->id, 'userID' => (string) $owner->id,
+            'date' => $date, 'startTime' => '10:00', 'space' => 'A6',
+            'quantity' => 3, 'productID' => (string) $product->id,
+        ]);
+
+        $this->actingAs($owner)->post('/deleteItem/'.$paid->id);
+
+        // the slot is still taken, so nobody can book over it
+        $this->actingAs(User::factory()->create())
+            ->post('/addCart', [
+                'id' => $product->id, 'date' => $date, 'time' => '10:00',
+                'quantity' => 1, 'space' => 'A6',
+            ])
+            ->assertSessionHasErrors('space');
+
+        $this->assertSame(1, myCart::where('space', 'A6')->count());
     }
 }

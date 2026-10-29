@@ -58,6 +58,9 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::post('/deleteItem/{id}', [App\Http\Controllers\CartController::class, 'delete'])->name('delete.Item');
 
     Route::post('/checkout', [App\Http\Controllers\PaymentController::class, 'paymentPost'])->name('payment.post');
+    /* Stripe sends the customer back here. A top-level GET navigation, so the
+       SameSite=lax session cookie still rides along and Auth::id() is available. */
+    Route::get('/checkout/return', [App\Http\Controllers\PaymentController::class, 'paymentReturn'])->name('payment.return');
     Route::get('/myOrder', [App\Http\Controllers\PaymentController::class, 'showOrder'])->name('myOrder');
 });
 

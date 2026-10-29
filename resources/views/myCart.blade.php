@@ -25,6 +25,13 @@
 
     @include('partials.alerts')
 
+    {{-- Stripe's cancel redirect can't carry a flash message, so it sets ?cancelled=1 --}}
+    @if (request('cancelled'))
+        <div class="alert alert-warning" role="alert">
+            Payment cancelled. Your bookings are still in your cart.
+        </div>
+    @endif
+
     <div class="row g-4">
         <div class="{{ $carts->isEmpty() ? 'col-12' : 'col-lg-8' }}">
             <div class="admin-panel">
@@ -98,41 +105,18 @@
 
         @if ($carts->isNotEmpty())
         <div class="col-lg-4">
-            <form action="{{ route('payment.post') }}" method="post" class="require-validation admin-panel" data-cc-on-file="false" data-stripe-publishable-key="{{ config('services.stripe.key') }}" id="payment-form">
+            {{--
+                No card fields here on purpose. Stripe collects the card on its
+                own hosted page, so no card data ever enters this document and
+                this app stays out of PCI scope.
+            --}}
+            <form action="{{ route('payment.post') }}" method="post" class="admin-panel" id="payment-form">
                 @csrf
-                <h2 class="h5 fw-bold mb-3">Card Payment</h2>
-
-                {{--
-                    These inputs deliberately have no name attribute: card
-                    details must never reach our server. Stripe.js reads them
-                    by class and posts only the token it returns.
-                --}}
-                <div class="mb-3 required">
-                    <label class="form-label small fw-semibold" for="card-name">Name on Card</label>
-                    <input id="card-name" class="form-control" type="text" autocomplete="cc-name" required>
-                </div>
-                <div class="mb-3 required">
-                    <label class="form-label small fw-semibold" for="card-number">Card Number</label>
-                    <input id="card-number" class="form-control card-number" type="text" inputmode="numeric" autocomplete="off" required>
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-4 required">
-                        <label class="form-label small fw-semibold" for="card-month">Month</label>
-                        <input id="card-month" class="form-control card-expiry-month" type="text" inputmode="numeric" placeholder="MM" required>
-                    </div>
-                    <div class="col-4 required">
-                        <label class="form-label small fw-semibold" for="card-year">Year</label>
-                        <input id="card-year" class="form-control card-expiry-year" type="text" inputmode="numeric" placeholder="YYYY" required>
-                    </div>
-                    <div class="col-4 required">
-                        <label class="form-label small fw-semibold" for="card-cvc">CVC</label>
-                        <input id="card-cvc" class="form-control card-cvc" type="text" inputmode="numeric" autocomplete="off" required>
-                    </div>
-                </div>
-
-                <div class="error mb-3 d-none">
-                    <div class="alert alert-danger mb-0" role="alert">Please correct the errors and try again.</div>
-                </div>
+                <h2 class="h5 fw-bold mb-3">Payment</h2>
+                <p class="small text-muted">
+                    Pay Now takes you to Stripe's secure page to enter your card, then brings you
+                    straight back here.
+                </p>
 
                 <div class="booking-total">
                     <span>Total</span>
@@ -146,67 +130,4 @@
     </div>
 </div>
 
-<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-<script type="text/javascript">
-// The Vite bundle loads as type="module", which is deferred, so jQuery is not
-// defined while this script is parsed. DOMContentLoaded fires after deferred
-// scripts run, so waiting for it guarantees window.$ exists.
-document.addEventListener('DOMContentLoaded', function () {
-  var $form = $(".require-validation");
-
-  function showError(message) {
-    $form.find('div.error').removeClass('d-none').find('.alert').text(message);
-  }
-
-  $form.on('submit', function(e) {
-    var $inputs = $form.find('.required input'),
-    valid = true;
-    $form.find('div.error').addClass('d-none');
-    $form.find('.is-invalid').removeClass('is-invalid');
-    $inputs.each(function(i, el) {
-        var $input = $(el);
-        if ($input.val() === '') {
-            $input.addClass('is-invalid');
-            valid = false;
-        }
-    });
-    if (!valid) {
-        e.preventDefault();
-        showError('Please correct the errors and try again.');
-        return;
-    }
-    if (!$('input[name="cid[]"]:checked').length) {
-        e.preventDefault();
-        showError('Tick the booking you want to pay for.');
-        return;
-    }
-    if (!$form.data('stripe-publishable-key')) {
-        e.preventDefault();
-        showError('Card payment is not configured yet. Set STRIPE_KEY and STRIPE_SECRET in .env.');
-        return;
-    }
-    if (!$form.data('cc-on-file')) {
-      e.preventDefault();
-      Stripe.setPublishableKey($form.data('stripe-publishable-key'));
-      Stripe.createToken({
-          number: $('.card-number').val(),
-          cvc: $('.card-cvc').val(),
-          exp_month: $('.card-expiry-month').val(),
-          exp_year: $('.card-expiry-year').val()
-      }, stripeResponseHandler);
-    }
-  });
-
-  function stripeResponseHandler(status, response) {
-      if (response.error) {
-          showError(response.error.message);
-      } else {
-          /* token contains id, last4, and card type */
-          var token = response['id'];
-          $form.append($('<input type="hidden" name="stripeToken">').val(token));
-          $form.get(0).submit();
-      }
-  }
-});
-</script>
 @endsection

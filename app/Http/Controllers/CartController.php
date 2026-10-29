@@ -23,6 +23,17 @@ class CartController extends Controller
             'time'=>'required|date_format:H:i',
             'quantity'=>'required|integer|min:1|max:24',
             'space'=>['required',Rule::in(Product::spaces())],
+        ],[
+            'id.exists'=>'That car park does not exist.',
+            'space.in'=>'Pick a parking space from the list.',
+            'time.date_format'=>'Enter a start time as HH:MM.',
+        ],[
+            //without these the customer is shown our column names
+            'id'=>'car park',
+            'date'=>'booking date',
+            'time'=>'start time',
+            'quantity'=>'hours',
+            'space'=>'parking space',
         ]);
 
         $start=Carbon::parse($booking['date'].' '.$booking['time']);
@@ -96,10 +107,16 @@ class CartController extends Controller
     }
 
     public function delete($id){
-        //scoped to the owner, otherwise any id deletes someone else's booking
-        $delete=myCart::where('id',$id)->where('userID',Auth::id())->firstOrFail();
+        /* Scoped to the owner, otherwise any id deletes someone else's booking —
+           and to rows still in the cart. Deleting a paid row cost the customer the
+           booking they had paid for, left the order's total higher than the rows it
+           listed, and freed the space for someone else to book. */
+        $delete=myCart::where('id',$id)
+            ->where('userID',Auth::id())
+            ->where('orderID','')
+            ->firstOrFail();
         $delete->delete();  //run SQL delete from my_Cart where id=$id
-        return redirect()->route('myCart');
+        return redirect()->route('myCart')->with('success','Booking removed from your cart.');
     }
     
 }
