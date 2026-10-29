@@ -78,6 +78,7 @@
                                 <li><a class="dropdown-item" href="{{ route('myCart') }}">My Cart</a></li>
                                 <li><a class="dropdown-item" href="{{ route('myOrder') }}">Payment History</a></li>
                                 <li><a class="dropdown-item" href="{{ route('insertFeedback') }}">Feedback</a></li>
+                                <li><a class="dropdown-item" href="{{ route('myFeedback') }}">Feedback History</a></li>
                             @endunless
                             <li><hr class="dropdown-divider"></li>
                             <li>

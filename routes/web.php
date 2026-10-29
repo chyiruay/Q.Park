@@ -51,6 +51,7 @@ Route::middleware(['auth', 'customer'])->group(function () {
 
     Route::get('/insertFeedback', [App\Http\Controllers\FeedbackController::class, 'index'])->name('insertFeedback');
     Route::post('/insertFeedback/store', [App\Http\Controllers\FeedbackController::class, 'store'])->name('addFeedback');
+    Route::get('/myFeedback', [App\Http\Controllers\FeedbackController::class, 'history'])->name('myFeedback');
 
     Route::post('/addCart', [App\Http\Controllers\CartController::class, 'add'])->name('add.to.cart');
     Route::get('/myCart', [App\Http\Controllers\CartController::class, 'showMyCart'])->name('myCart');

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Feedback;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\myCart;
@@ -52,7 +53,8 @@ class AccessControlTest extends TestCase
         $product = Product::factory()->create();
 
         $urls = ['/', '/help', '/products', '/viewDetail/'.$product->categoryID,
-                 '/home', '/order/'.$product->id, '/myCart', '/myOrder', '/insertFeedback'];
+                 '/home', '/order/'.$product->id, '/myCart', '/myOrder', '/insertFeedback',
+                 '/myFeedback'];
 
         foreach ($urls as $url) {
             $this->actingAs($admin)->get($url)->assertRedirect(route('admin'), 302, $url);
@@ -60,6 +62,25 @@ class AccessControlTest extends TestCase
 
         $this->actingAs($admin)->post('/product', ['keyword' => 'hotel'])
             ->assertRedirect(route('admin'));
+    }
+
+    /** The history page takes no id — it reads the relationship off the signed-in user. */
+    public function test_feedback_history_shows_only_your_own()
+    {
+        $mine = User::factory()->create();
+        $theirs = User::factory()->create();
+
+        Feedback::create(['content' => 'my own note', 'userID' => (string) $mine->id]);
+        Feedback::create(['content' => 'someone elses note', 'userID' => (string) $theirs->id]);
+        Feedback::create(['content' => 'authorless legacy note']);   // predates the userID column
+
+        $this->get('/myFeedback')->assertRedirect('/login');
+
+        $this->actingAs($mine)->get('/myFeedback')
+            ->assertStatus(200)
+            ->assertSee('my own note')
+            ->assertDontSee('someone elses note')
+            ->assertDontSee('authorless legacy note');
     }
 
     public function test_admins_keep_their_own_profile_pages()

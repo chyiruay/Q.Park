@@ -33,7 +33,15 @@ class FeedbackController extends Controller
 
 
     public function index(){
-    
+
         return view('insertFeedback');
+    }
+
+    //the signed-in customer's own feedback; scoped by the relationship, so no id is accepted
+    public function history(){
+        /** @var User $user */
+        $user=Auth::user();
+        $feedback=$user->feedback()->orderByDesc('id')->paginate(6);
+        return view('myFeedback')->with('feedback',$feedback);
     }
 }
