@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Stripe;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\myOrder;
 use App\Models\myCart;
@@ -40,6 +41,27 @@ class PaymentController extends Controller
             return redirect()->route('myCart')->withErrors('Those bookings are no longer in your cart.');
         }
 
+        /* A row whose hold expired may have lost its space. Check and renew one row at
+           a time, so two expired rows in this cart can't both pass for the same slot. */
+        $lost=[];
+        foreach($items as $item){
+            if(!$item->date){
+                continue;   //rows from before bookings had a date have no slot to check
+            }
+            $start=Carbon::parse($item->date.' '.$item->startTime);
+            if(myCart::isTaken($item->productID,$item->space,$start,(int) $item->cartQty,$item->cid)){
+                //same date/time format the cart shows, so the customer can find the row
+                $lost[]=$item->name.', space '.$item->space.' on '.$start->format('d M Y, h:i A');
+            }else{
+                myCart::where('id',$item->cid)->update(['created_at'=>now()]);
+            }
+        }
+        if($lost){
+            return redirect()->route('myCart')->withErrors(
+                implode('; ',$lost).' was booked by someone else while it sat in your cart. Edit it to another space or time, or remove it.'
+            );
+        }
+
         if(!config('services.stripe.secret')){
             return redirect()->route('myCart')
                 ->withErrors('Card payment is not configured yet. Set STRIPE_KEY and STRIPE_SECRET in .env.');
@@ -72,6 +94,8 @@ class PaymentController extends Controller
                 'success_url'=>route('payment.return').'?session_id={CHECKOUT_SESSION_ID}',
                 //?cancelled tells the cart to say so; Stripe's redirect carries no flash session
                 'cancel_url'=>route('myCart').'?cancelled=1',
+                //Stripe's minimum is 30 minutes from its own clock; must stay under myCart::HOLD_MINUTES
+                'expires_at'=>now()->addMinutes(31)->timestamp,
             ]);
         }catch(\Throwable $e){
             report($e);
@@ -189,7 +213,7 @@ class PaymentController extends Controller
     {
         return DB::table('my_carts')
             ->leftjoin('products','products.id','=','my_carts.productID')
-            ->select('my_carts.id as cid','my_carts.quantity as cartQty','my_carts.space','products.price','products.name')
+            ->select('my_carts.id as cid','my_carts.quantity as cartQty','my_carts.space','my_carts.productID','my_carts.date','my_carts.startTime','products.price','products.name')
             ->whereIn('my_carts.id',$cids)
             ->where('my_carts.orderID','=','')
             ->where('my_carts.userID','=',$userId)

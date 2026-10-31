@@ -107,11 +107,16 @@ form always collected a date and start time but had nowhere to put them (the tim
 dropdown renders it and `CartController::add` validates against it, so a hand-edited
 `<option>` can't reach the database.
 
-`CartController::isTaken()` refuses a booking that overlaps an existing one for the same car
+`myCart::isTaken()` refuses a booking that overlaps an existing one for the same car
 park and space. It compares full datetimes, so a booking running past midnight is caught, and
-it scans the day either side of the requested date for that reason. **Pending rows count** —
-an in-cart booking holds its space, with no expiry, so an abandoned cart blocks a bay for
-good. `add()` also rejects a start time already in the past; the `after_or_equal:today` date
+it scans the day either side of the requested date for that reason. Paid rows always count;
+**pending rows count only for `myCart::HOLD_MINUTES` (35) after `created_at`**, so an
+abandoned cart frees its bay. The expired row stays in the cart, so `paymentPost()` re-checks
+each row before going to Stripe, refuses one whose space was taken meanwhile, and renews the
+hold (`created_at = now()`) on the rest. The Stripe session gets `expires_at` of 31 minutes,
+under the hold, so a hold can't lapse while the customer is on Stripe's page. `CartController::edit()`/`update()` reuse the `order` view (filled from `$cart`) and the same
+checks as `add()`, excluding the row's own old slot; the car park can't change, and an edit
+renews the hold. `add()` also rejects a start time already in the past; the `after_or_equal:today` date
 rule alone let through 00:30 on the current day.
 
 ### Auth lives on the routes
@@ -236,7 +241,6 @@ PHP floors: Laravel 11 and 12 are `^8.2`; Laravel 13 is `^8.3`.
 - `.env` ships `APP_ENV=local` / `APP_DEBUG=true`, so an unhandled exception renders Ignition
   with full source, the SQL and the git hash. Fine locally; set `APP_DEBUG=false` anywhere
   else. There is no production env file in the repo.
-- Pending cart rows hold a parking space forever — see the data model section.
 - `Stripe\Charge::create()` and Stripe.js **v2** are both long deprecated. Stripe blocks raw
   card numbers from the browser on newer accounts, so `Stripe.createToken` may be refused even
   with valid keys. The modern path is Payment Intents plus Stripe Elements. The currency is

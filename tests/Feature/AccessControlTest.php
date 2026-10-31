@@ -119,7 +119,7 @@ class AccessControlTest extends TestCase
 
     public function test_customer_pages_are_closed_to_guests()
     {
-        foreach (['/myCart', '/myOrder', '/viewProfile'] as $url) {
+        foreach (['/myCart', '/myOrder', '/viewProfile', '/editItem/1'] as $url) {
             $this->get($url)->assertRedirect('/login');
         }
 

@@ -25,7 +25,9 @@
 
         @include('partials.alerts')
 
-        <form method="POST" action="{{ route('add.to.cart') }}" novalidate>
+        {{-- $cart is set when editing a row from the cart; the same form, filled in --}}
+        @php($cart = $cart ?? null)
+        <form method="POST" action="{{ $cart ? route('update.Item', ['id' => $cart->id]) : route('add.to.cart') }}" novalidate>
             @csrf
             <input type="hidden" name="id" value="{{ $product->id }}">
 
@@ -34,7 +36,7 @@
                     <div class="form-floating">
                         <input id="date" type="date" name="date"
                                class="form-control @error('date') is-invalid @enderror"
-                               value="{{ old('date') }}" min="{{ date('Y-m-d') }}" required>
+                               value="{{ old('date', $cart?->date) }}" min="{{ date('Y-m-d') }}" required>
                         <label for="date">{{ __('Date') }}</label>
                     </div>
                 </div>
@@ -42,7 +44,7 @@
                     <div class="form-floating">
                         <input id="time" type="time" name="time"
                                class="form-control @error('time') is-invalid @enderror"
-                               value="{{ old('time') }}" required>
+                               value="{{ old('time', $cart ? substr($cart->startTime, 0, 5) : null) }}" required>
                         <label for="time">{{ __('Start Time') }}</label>
                     </div>
                 </div>
@@ -50,7 +52,7 @@
                     <div class="form-floating">
                         <input id="quantity" type="number" name="quantity"
                                class="form-control @error('quantity') is-invalid @enderror"
-                               value="{{ old('quantity', 1) }}" min="1" max="24" required>
+                               value="{{ old('quantity', $cart?->quantity ?? 1) }}" min="1" max="24" required>
                         <label for="quantity">{{ __('Hours') }}</label>
                     </div>
                 </div>
@@ -59,7 +61,7 @@
                         <select id="space" name="space" class="form-select @error('space') is-invalid @enderror" required>
                             <option value="">{{ __('Select') }}</option>
                             @foreach (\App\Models\Product::spaces() as $space)
-                                <option @selected(old('space') === $space)>{{ $space }}</option>
+                                <option @selected(old('space', $cart?->space) === $space)>{{ $space }}</option>
                             @endforeach
                         </select>
                         <label for="space">{{ __('Parking Space') }}</label>
@@ -70,10 +72,13 @@
             {{-- display only; the cart and checkout price it server-side --}}
             <div class="booking-total">
                 <span>{{ __('Estimated total') }}</span>
-                <strong id="booking-total" data-price="{{ $product->price }}">RM {{ number_format($product->price * (int) old('quantity', 1), 2) }}</strong>
+                <strong id="booking-total" data-price="{{ $product->price }}">RM {{ number_format($product->price * (int) old('quantity', $cart?->quantity ?? 1), 2) }}</strong>
             </div>
 
-            <button type="submit" class="btn btn-qpark w-100">{{ __('Add to Cart') }}</button>
+            <button type="submit" class="btn btn-qpark w-100">{{ $cart ? __('Save Changes') : __('Add to Cart') }}</button>
+            @if ($cart)
+                <a href="{{ route('myCart') }}" class="btn btn-link w-100 mt-2">{{ __('Cancel') }}</a>
+            @endif
         </form>
 
     </div>

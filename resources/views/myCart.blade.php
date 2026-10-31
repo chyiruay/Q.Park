@@ -15,6 +15,27 @@
         });
     }
     document.addEventListener('DOMContentLoaded', cal);  //items start ticked, so show their total straight away
+
+    /* Counts down each booking's hold. Seconds left come from the server, so a
+       wrong clock on the customer's computer can't skew it. */
+    document.addEventListener('DOMContentLoaded', function () {
+        var loaded = Date.now();
+        function tick() {
+            document.querySelectorAll('.hold-timer').forEach(function (el) {
+                var left = Math.round(el.dataset.left - (Date.now() - loaded) / 1000);
+                if (left > 0) {
+                    var m = Math.floor(left / 60), s = left % 60;
+                    el.textContent = 'Held for you: ' + m + ':' + (s < 10 ? '0' : '') + s;
+                    el.className = 'hold-timer small ' + (left <= 300 ? 'text-danger fw-semibold' : 'text-muted');
+                } else {
+                    el.textContent = 'Hold expired. Pay now and we\'ll check the space is still free.';
+                    el.className = 'hold-timer small text-warning';
+                }
+            });
+        }
+        tick();
+        setInterval(tick, 1000);
+    });
 </script>
 
 <div class="container admin-dash">
@@ -61,6 +82,9 @@
                                             <div>
                                                 <div class="fw-semibold">{{ $cart->name }}</div>
                                                 <div class="small text-muted">RM {{ number_format($cart->price, 2) }} / hour</div>
+                                                @if ($cart->heldAt)
+                                                    <div class="hold-timer small text-muted" data-left="{{ (int) round(max(0, now()->diffInSeconds(\Carbon\Carbon::parse($cart->heldAt)->addMinutes(\App\Models\myCart::HOLD_MINUTES), false))) }}"></div>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -71,8 +95,11 @@
                                     </td>
                                     <td>{{ $cart->cartQty }}</td>
                                     <td class="text-end fw-semibold text-nowrap">RM {{ number_format($cart->price * $cart->cartQty, 2) }}</td>
-                                    <td class="text-end">
-                                        <form method="POST" action="{{ route('delete.Item', ['id' => $cart->cid]) }}" onsubmit="return confirm('Remove this booking?')">
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ route('edit.Item', ['id' => $cart->cid]) }}" class="btn btn-sm btn-outline-secondary admin-icon-btn" title="Edit" aria-label="Edit {{ $cart->name }}, space {{ $cart->space }}">
+                                            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></svg>
+                                        </a>
+                                        <form method="POST" action="{{ route('delete.Item', ['id' => $cart->cid]) }}" onsubmit="return confirm('Remove this booking?')" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-danger admin-icon-btn" title="Remove" aria-label="Remove {{ $cart->name }}, space {{ $cart->space }}">
                                                 <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>

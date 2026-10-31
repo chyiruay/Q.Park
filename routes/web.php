@@ -58,6 +58,8 @@ Route::middleware(['auth', 'customer'])->group(function () {
 
     Route::post('/addCart', [App\Http\Controllers\CartController::class, 'add'])->name('add.to.cart');
     Route::get('/myCart', [App\Http\Controllers\CartController::class, 'showMyCart'])->name('myCart');
+    Route::get('/editItem/{id}', [App\Http\Controllers\CartController::class, 'edit'])->name('edit.Item');
+    Route::post('/updateItem/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('update.Item');
     Route::post('/deleteItem/{id}', [App\Http\Controllers\CartController::class, 'delete'])->name('delete.Item');
 
     Route::post('/checkout', [App\Http\Controllers\PaymentController::class, 'paymentPost'])->name('payment.post');

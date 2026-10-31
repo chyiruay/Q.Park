@@ -62,6 +62,44 @@ class PaymentTest extends TestCase
         $this->assertSame('', $theirRow->fresh()->orderID, 'another customer\'s booking must stay unpaid');
     }
 
+    /** Ali's hold expired and Siti took the space: Ali must not be sent on to pay for it. */
+    public function test_checkout_refuses_an_expired_booking_whose_space_was_taken()
+    {
+        config(['services.stripe.secret' => 'sk_test_not_a_real_key']);
+        $ali = User::factory()->create();
+        $siti = User::factory()->create();
+        $alisRow = $this->cartRow($ali);
+
+        $this->travel(myCart::HOLD_MINUTES + 1)->minutes();
+        $this->actingAs($siti)->post('/addCart', [
+            'id' => $alisRow->productID, 'date' => '2026-12-01', 'time' => '10:00', 'quantity' => 1, 'space' => 'A3',
+        ])->assertSessionHasNoErrors();
+
+        $this->actingAs($ali)->post('/checkout', ['cid' => [$alisRow->id]])
+            ->assertRedirect(route('myCart'))
+            ->assertSessionHasErrors();
+
+        $error = session('errors')->first();
+        $this->assertStringContainsString('booked by someone else', $error);
+        // enough to find the row in the cart: car park, space, date and time
+        $this->assertStringContainsString(Product::find($alisRow->productID)->name.', space A3 on 01 Dec 2026, 09:00 AM', $error);
+        $this->assertSame(0, myOrder::count());
+    }
+
+    /** Still free after expiry: checkout goes ahead and the hold is renewed for the Stripe page. */
+    public function test_checkout_renews_an_expired_hold_that_is_still_free()
+    {
+        config(['services.stripe.secret' => null]);
+        $user = User::factory()->create();
+        $row = $this->cartRow($user);
+
+        $this->travel(myCart::HOLD_MINUTES + 1)->minutes();
+        $this->actingAs($user)->post('/checkout', ['cid' => [$row->id]]);
+
+        $this->assertStringContainsString('not configured', session('errors')->first(), 'it got past the space check');
+        $this->assertTrue($row->fresh()->created_at->gte(now()->subMinute()), 'the hold was renewed');
+    }
+
     public function test_checkout_needs_at_least_one_ticked_booking()
     {
         $user = User::factory()->create();

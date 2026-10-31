@@ -13,7 +13,7 @@ class Product extends Model
     /**
      * Bays offered at every car park. One list for the booking dropdown and the
      * server-side check, so a hand-edited <option> can't reach the database.
-     * Clashes are caught separately by CartController::isTaken().
+     * Clashes are caught separately by myCart::isTaken().
      *
      * shortcut: the same 36 bays for every car park. Upgrade to a spaces table with
      * a productID when car parks need their own layouts.

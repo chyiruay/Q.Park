@@ -151,6 +151,109 @@ class BookingTest extends TestCase
         $this->assertSame(1, myCart::count());
     }
 
+    /** An abandoned cart row stops holding its space once the hold runs out; a paid one never does. */
+    public function test_only_an_expired_unpaid_hold_frees_the_space()
+    {
+        $product = Product::factory()->create();
+        $user = User::factory()->create();
+        $date = now()->addDays(3)->toDateString();
+        $row = ['userID' => $user->id, 'date' => $date, 'startTime' => '10:00', 'quantity' => 2, 'productID' => $product->id];
+        $booking = ['id' => $product->id, 'date' => $date, 'time' => '10:00', 'quantity' => 2];
+
+        myCart::create($row + ['orderID' => '', 'space' => 'A1']);
+        myCart::create($row + ['orderID' => '7', 'space' => 'A2']);
+
+        $this->travel(myCart::HOLD_MINUTES + 1)->minutes();
+
+        $this->actingAs($user)->post('/addCart', $booking + ['space' => 'A1'])->assertSessionHasNoErrors();
+        $this->actingAs($user)->post('/addCart', $booking + ['space' => 'A2'])->assertSessionHasErrors('space');
+
+        $this->assertSame(3, myCart::count());
+    }
+
+    /** The cart's countdown starts from what the server says is left of the hold. */
+    public function test_the_cart_shows_how_long_the_hold_has_left()
+    {
+        $this->freezeSecond();   // created_at drops microseconds; now() otherwise keeps them
+        $user = User::factory()->create();
+        myCart::create([
+            'orderID' => '', 'userID' => $user->id, 'date' => now()->addDays(3)->toDateString(),
+            'startTime' => '10:00', 'space' => 'A1', 'quantity' => 2,
+            'productID' => Product::factory()->create()->id,
+        ]);
+
+        $this->travel(5)->minutes();
+        $this->actingAs($user)->get('/myCart')
+            ->assertSee('data-left="'.((myCart::HOLD_MINUTES - 5) * 60).'"', false);
+
+        $this->travel(myCart::HOLD_MINUTES)->minutes();
+        $this->actingAs($user)->get('/myCart')->assertSee('data-left="0"', false);
+    }
+
+    private function pendingRow(User $user, array $overrides = []): myCart
+    {
+        return myCart::create($overrides + [
+            'orderID' => '', 'userID' => $user->id, 'date' => now()->addDays(3)->toDateString(),
+            'startTime' => '10:00', 'space' => 'A1', 'quantity' => 2,
+            'productID' => Product::factory()->create()->id,
+        ]);
+    }
+
+    public function test_a_cart_booking_can_be_edited()
+    {
+        $user = User::factory()->create();
+        $row = $this->pendingRow($user);
+        $newDate = now()->addDays(5)->toDateString();
+
+        $this->actingAs($user)->get('/editItem/'.$row->id)
+            ->assertOk()
+            ->assertSee('value="'.$row->date.'"', false)
+            ->assertSee('Save Changes');
+
+        $this->travel(myCart::HOLD_MINUTES + 1)->minutes();
+
+        // 11:00 overlaps the row's own old 10:00-12:00 slot, which must not count as a clash
+        $this->actingAs($user)->post('/updateItem/'.$row->id, [
+            'date' => $newDate, 'time' => '11:00', 'quantity' => 3, 'space' => 'A2',
+            'id' => Product::factory()->create()->id,   // a posted car park is ignored
+        ])->assertRedirect(route('myCart'))->assertSessionHasNoErrors();
+
+        $row->refresh();
+        $this->assertSame([$newDate, '11:00', 3, 'A2'], [$row->date, substr($row->startTime, 0, 5), (int) $row->quantity, $row->space]);
+        $this->assertSame(1, myCart::count());
+        $this->assertTrue($row->created_at->gte(now()->subMinute()), 'an edit renews the hold');
+    }
+
+    public function test_an_edit_into_someone_elses_slot_is_refused()
+    {
+        $user = User::factory()->create();
+        $row = $this->pendingRow($user);
+        $this->pendingRow(User::factory()->create(), ['productID' => $row->productID, 'space' => 'A2']);
+
+        $this->actingAs($user)->post('/updateItem/'.$row->id, [
+            'date' => $row->date, 'time' => '10:00', 'quantity' => 2, 'space' => 'A2',
+        ])->assertSessionHasErrors('space');
+
+        $this->assertSame('A1', $row->fresh()->space);
+    }
+
+    public function test_only_your_own_unpaid_bookings_can_be_edited()
+    {
+        $owner = User::factory()->create();
+        $theirs = $this->pendingRow($owner);
+        $paid = $this->pendingRow($owner, ['orderID' => '9', 'space' => 'A5']);
+        $form = ['date' => now()->addDays(4)->toDateString(), 'time' => '09:00', 'quantity' => 1, 'space' => 'A9'];
+
+        $this->actingAs(User::factory()->create())->get('/editItem/'.$theirs->id)->assertNotFound();
+        $this->post('/updateItem/'.$theirs->id, $form)->assertNotFound();
+
+        $this->actingAs($owner)->get('/editItem/'.$paid->id)->assertNotFound();
+        $this->post('/updateItem/'.$paid->id, $form)->assertNotFound();
+
+        $this->assertSame('A1', $theirs->fresh()->space);
+        $this->assertSame('A5', $paid->fresh()->space);
+    }
+
     public function test_valid_booking_stores_date_and_start_time()
     {
         $product = Product::factory()->create(['price' => 6.00]);
