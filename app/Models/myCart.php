@@ -18,6 +18,19 @@ class myCart extends Model
     const HOLD_MINUTES=35;
 
     /**
+     * Runs a check-then-write on one car park's bookings with that car park locked,
+     * so two requests can't both find a space free and both take it. The lock is on
+     * the products row because a free slot has no my_carts row to lock.
+     */
+    public static function whileLocked($productID, \Closure $fn)
+    {
+        return DB::transaction(function() use ($productID,$fn){
+            DB::table('products')->where('id',$productID)->lockForUpdate()->first();
+            return $fn();
+        });
+    }
+
+    /**
      * Two bookings clash when each starts before the other ends. Paid rows always
      * count; unpaid rows only while their hold is fresh, so an abandoned cart
      * frees its space after HOLD_MINUTES.

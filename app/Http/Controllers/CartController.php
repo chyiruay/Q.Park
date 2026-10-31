@@ -21,19 +21,27 @@ class CartController extends Controller
 
         $start=Carbon::parse($booking['date'].' '.$booking['time']);
 
-        if($error=$this->bookingError($booking,$start)){
+        $error=myCart::whileLocked($booking['id'],function() use ($booking,$start){
+            if($error=$this->bookingError($booking,$start)){
+                return $error;
+            }
+
+            myCart::create([
+                'quantity'=>$booking['quantity'],
+                'orderID'=>'',
+                'date'=>$booking['date'],
+                'startTime'=>$booking['time'],
+                'space'=>$booking['space'],
+                'productID'=>$booking['id'],
+                'userID'=>Auth::id(),
+            ]);
+            return null;
+        });
+
+        if($error){
             return back()->withInput()->withErrors($error);
         }
 
-        $addItem=myCart::create([
-            'quantity'=>$booking['quantity'],
-            'orderID'=>'',
-            'date'=>$booking['date'],
-            'startTime'=>$booking['time'],
-            'space'=>$booking['space'],
-            'productID'=>$booking['id'],
-            'userID'=>Auth::id(),
-        ]);
         Session::flash('success',"Booking added to your cart!");
         return redirect()->route('myCart');
     }
@@ -55,28 +63,41 @@ class CartController extends Controller
 
         $start=Carbon::parse($booking['date'].' '.$booking['time']);
 
-        //the row being edited mustn't clash with its own old slot
-        if($error=$this->bookingError($booking,$start,$cart->id)){
+        $error=myCart::whileLocked($cart->productID,function() use ($booking,$start,$id){
+            /* Read again under lock: checkout may have paid this row since the read
+               above, and the edit must not rewrite a booking that's been paid for.
+               recordPayment() locks the same row, so the two take turns. */
+            $cart=$this->ownPendingRow($id,true);
+
+            //the row being edited mustn't clash with its own old slot
+            if($error=$this->bookingError($booking,$start,$cart->id)){
+                return $error;
+            }
+
+            $cart->forceFill([
+                'quantity'=>$booking['quantity'],
+                'date'=>$booking['date'],
+                'startTime'=>$booking['time'],
+                'space'=>$booking['space'],
+                'created_at'=>now(),   //the slot was just checked free, so it gets a fresh hold
+            ])->save();
+            return null;
+        });
+
+        if($error){
             return back()->withInput()->withErrors($error);
         }
-
-        $cart->forceFill([
-            'quantity'=>$booking['quantity'],
-            'date'=>$booking['date'],
-            'startTime'=>$booking['time'],
-            'space'=>$booking['space'],
-            'created_at'=>now(),   //the slot was just checked free, so it gets a fresh hold
-        ])->save();
 
         return redirect()->route('myCart')->with('success','Booking updated.');
     }
 
     /** Edits, like deletes, only reach your own rows that are still unpaid. */
-    private function ownPendingRow($id): myCart
+    private function ownPendingRow($id, bool $lock=false): myCart
     {
         return myCart::where('id',$id)
             ->where('userID',Auth::id())
             ->where('orderID','')
+            ->when($lock,fn($q)=>$q->lockForUpdate())
             ->firstOrFail();
     }
 

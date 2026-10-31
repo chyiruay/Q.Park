@@ -114,7 +114,12 @@ it scans the day either side of the requested date for that reason. Paid rows al
 abandoned cart frees its bay. The expired row stays in the cart, so `paymentPost()` re-checks
 each row before going to Stripe, refuses one whose space was taken meanwhile, and renews the
 hold (`created_at = now()`) on the rest. The Stripe session gets `expires_at` of 31 minutes,
-under the hold, so a hold can't lapse while the customer is on Stripe's page. `CartController::edit()`/`update()` reuse the `order` view (filled from `$cart`) and the same
+under the hold, so a hold can't lapse while the customer is on Stripe's page. Every check-then-write on bookings (`add`, `update`, the checkout re-check) runs inside
+`myCart::whileLocked($productID, ...)`, which locks that car park's `products` row for the
+transaction — a free slot has no `my_carts` row to lock. SQLite ignores `lockForUpdate`, so the
+test suite can't exercise it; it only bites on MySQL.
+
+`CartController::edit()`/`update()` reuse the `order` view (filled from `$cart`) and the same
 checks as `add()`, excluding the row's own old slot; the car park can't change, and an edit
 renews the hold. `add()` also rejects a start time already in the past; the `after_or_equal:today` date
 rule alone let through 00:30 on the current day.

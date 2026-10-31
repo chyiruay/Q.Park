@@ -49,11 +49,17 @@ class PaymentController extends Controller
                 continue;   //rows from before bookings had a date have no slot to check
             }
             $start=Carbon::parse($item->date.' '.$item->startTime);
-            if(myCart::isTaken($item->productID,$item->space,$start,(int) $item->cartQty,$item->cid)){
+            //locked like add(), or a new booking could slip in between the check and the renewal
+            $taken=myCart::whileLocked($item->productID,function() use ($item,$start){
+                if(myCart::isTaken($item->productID,$item->space,$start,(int) $item->cartQty,$item->cid)){
+                    return true;
+                }
+                myCart::where('id',$item->cid)->update(['created_at'=>now()]);
+                return false;
+            });
+            if($taken){
                 //same date/time format the cart shows, so the customer can find the row
                 $lost[]=$item->name.', space '.$item->space.' on '.$start->format('d M Y, h:i A');
-            }else{
-                myCart::where('id',$item->cid)->update(['created_at'=>now()]);
             }
         }
         if($lost){
