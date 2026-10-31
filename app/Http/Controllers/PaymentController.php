@@ -7,6 +7,7 @@ use Stripe;
 use Illuminate\Http\Request;
 use App\Models\myOrder;
 use App\Models\myCart;
+use App\Models\User;
 use Auth;
 use DB;
 use Illuminate\Support\Str;
@@ -32,7 +33,7 @@ class PaymentController extends Controller
             'cid.*.integer'=>'That booking reference is not valid.',
         ]);
 
-        $items=$this->pendingItems($request->input('cid'));
+        $items=$this->pendingItems($request->input('cid'),Auth::id());
 
         //every refusal belongs back on the cart, whatever the request's referer was
         if($items->isEmpty()){
@@ -66,7 +67,8 @@ class PaymentController extends Controller
                    so the return trip can't swap in someone else's bookings.
                    shortcut: metadata values cap at 500 chars, so ~80 rows per checkout.
                    Upgrade to a payments table if carts ever get that big. */
-                'metadata'=>['cids'=>$items->pluck('cid')->implode(',')],
+                //uid lets the webhook, which has no signed-in user, find whose rows these are
+                'metadata'=>['cids'=>$items->pluck('cid')->implode(','),'uid'=>Auth::id()],
                 'success_url'=>route('payment.return').'?session_id={CHECKOUT_SESSION_ID}',
                 //?cancelled tells the cart to say so; Stripe's redirect carries no flash session
                 'cancel_url'=>route('myCart').'?cancelled=1',
@@ -102,46 +104,96 @@ class PaymentController extends Controller
             return redirect()->route('myCart')->withErrors('That payment was not completed.');
         }
 
-        $items=$this->pendingItems(array_filter(explode(',',(string) ($session->metadata->cids ?? ''))));
-
-        //an earlier visit already stamped these rows; refreshing must not buy them twice
-        if($items->isEmpty()){
+        //an earlier visit, or the webhook, already stamped these rows; refreshing must not buy them twice
+        if(!$this->recordPayment($session,Auth::id())){
             return redirect()->route('myOrder')
                 ->with('success','That payment is already recorded. Here are your orders.');
-        }
-
-        $newOrder=myOrder::create([
-            'paymentStatus'=>$session->payment_status,   //Stripe's word, not a hardcoded 'Done'
-            'userID'=>Auth::id(),
-            'amount'=>$session->amount_total/100,        //what Stripe actually collected
-        ]);
-
-        myCart::whereIn('id',$items->pluck('cid'))
-            ->where('userID',Auth::id())
-            ->where('orderID','')
-            ->update(['orderID'=>$newOrder->id]);
-
-        /* The money has moved and the order is recorded, so a mail outage must not
-           take the confirmation page down with it — log it and carry on. */
-        try{
-            $email=Auth::user()->email;   //the customer's receipt, not the developer's inbox
-            Notification::route('mail',$email)->notify(new \App\Notifications\orderPaid($email));
-        }catch(\Throwable $e){
-            report($e);
         }
 
         return redirect()->route('myOrder')->with('success','Payment received. Your booking is confirmed!');
     }
 
-    /** Ticked rows that are still unpaid and belong to the signed-in customer. */
-    private function pendingItems(array $cids)
+    /**
+     * Stripe calls this itself once a checkout is paid, so the order is recorded
+     * even when the customer closes the tab before the return redirect.
+     * The signature check is what stands in for a signed-in user here.
+     */
+    public function webhook(Request $request)
+    {
+        try{
+            $event=Stripe\Webhook::constructEvent(
+                $request->getContent(),
+                (string) $request->header('Stripe-Signature'),
+                (string) config('services.stripe.webhook_secret')
+            );
+        }catch(\Throwable $e){
+            return response('Invalid signature', 400);
+        }
+
+        $session=$event->data->object;
+
+        //async methods (e.g. FPX) complete unpaid and settle later in async_payment_succeeded
+        if(in_array($event->type,['checkout.session.completed','checkout.session.async_payment_succeeded'])
+            && $session->payment_status==='paid'){
+            //an exception here returns 500, so Stripe retries the delivery
+            $this->recordPayment($session,(int) ($session->metadata->uid ?? 0));
+        }
+
+        return response('ok');
+    }
+
+    /**
+     * Turns a paid Stripe session into an order. Both the return page and the
+     * webhook land here, often at the same moment, so the rows are locked and
+     * only the first caller records anything. Returns false if already recorded.
+     */
+    private function recordPayment($session, int $userId): bool
+    {
+        $recorded=DB::transaction(function() use ($session,$userId){
+            $items=$this->pendingItems(array_filter(explode(',',(string) ($session->metadata->cids ?? ''))),$userId,true);
+
+            if($items->isEmpty()){
+                return false;
+            }
+
+            $newOrder=myOrder::create([
+                'paymentStatus'=>$session->payment_status,   //Stripe's word, not a hardcoded 'Done'
+                'userID'=>$userId,
+                'amount'=>$session->amount_total/100,        //what Stripe actually collected
+            ]);
+
+            myCart::whereIn('id',$items->pluck('cid'))
+                ->where('userID',$userId)
+                ->where('orderID','')
+                ->update(['orderID'=>$newOrder->id]);
+
+            return true;
+        });
+
+        /* The money has moved and the order is recorded, so a mail outage must not
+           take the confirmation page down with it — log it and carry on. */
+        if($recorded){
+            try{
+                $email=User::findOrFail($userId)->email;   //the customer's receipt, not the developer's inbox
+                Notification::route('mail',$email)->notify(new \App\Notifications\orderPaid($email));
+            }catch(\Throwable $e){
+                report($e);
+            }
+        }
+
+        return $recorded;
+    }
+
+    /** Ticked rows that are still unpaid and belong to the given customer. */
+    private function pendingItems(array $cids, ?int $userId, bool $lock=false)
     {
         return DB::table('my_carts')
             ->leftjoin('products','products.id','=','my_carts.productID')
             ->select('my_carts.id as cid','my_carts.quantity as cartQty','my_carts.space','products.price','products.name')
             ->whereIn('my_carts.id',$cids)
             ->where('my_carts.orderID','=','')
-            ->where('my_carts.userID','=',Auth::id())
+            ->where('my_carts.userID','=',$userId)
+            ->when($lock,fn($q)=>$q->lockForUpdate())
             ->get();
     }
 

@@ -12,6 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'stripe/webhook',   //Stripe can't send our token; PaymentController::webhook checks its signature instead
     ];
 }

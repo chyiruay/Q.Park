@@ -182,6 +182,13 @@ sit — no JS copying needed.
 Stripe.js finds them by class (`.card-number`, `.card-cvc`, …) and posts only the token it
 returns. Giving them names would put raw card numbers in request logs. Don't "fix" that.
 
+Orders are recorded by `PaymentController::recordPayment()`, reached from both the
+`/checkout/return` redirect and the `POST /stripe/webhook` endpoint (`checkout.session.completed`
+and `async_payment_succeeded`), so closing the tab after paying doesn't lose the order. The
+webhook is outside every auth group and CSRF-exempt; its gate is the signature, checked against
+`STRIPE_WEBHOOK_SECRET`. Whichever call arrives first records the order and the other finds no
+pending rows — the rows are locked in a transaction so both can't win.
+
 `salesReport` renders a PDF through `barryvdh/laravel-dompdf`.
 
 Uploads land in `public/images/` and `public/floorPlan/` under `UploadedFile::hashName()` via

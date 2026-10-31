@@ -35,6 +35,9 @@ Route::middleware('customer')->group(function () {
 Route::get('/admin/login', [App\Http\Controllers\Auth\LoginController::class, 'showAdminLoginForm'])->name('admin.login');
 Route::post('/admin/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
 
+/* Stripe's server-to-server call: no session, so no auth group. The signature is the gate. */
+Route::post('/stripe/webhook', [App\Http\Controllers\PaymentController::class, 'webhook'])->name('stripe.webhook');
+
 /* Any signed-in account: admins manage their own profile too. */
 Route::middleware('auth')->group(function () {
     Route::get('/viewProfile', [App\Http\Controllers\UserController::class, 'showUser'])->name('viewProfile');

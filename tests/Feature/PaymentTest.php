@@ -91,6 +91,49 @@ class PaymentTest extends TestCase
         $this->assertSame('', $row->fresh()->orderID, 'the booking must still be unpaid');
     }
 
+    /** POSTs a checkout.session.completed event, signed the way Stripe signs it. */
+    private function webhook(myCart $row, User $user, string $secret = 'whsec_test')
+    {
+        config(['services.stripe.webhook_secret' => 'whsec_test']);
+        $payload = json_encode([
+            'id' => 'evt_test', 'object' => 'event', 'type' => 'checkout.session.completed',
+            'data' => ['object' => [
+                'object' => 'checkout.session', 'id' => 'cs_test', 'payment_status' => 'paid',
+                'amount_total' => 1100, 'metadata' => ['cids' => (string) $row->id, 'uid' => (string) $user->id],
+            ]],
+        ]);
+        $t = time();
+        $sig = "t=$t,v1=".hash_hmac('sha256', "$t.$payload", $secret);
+
+        return $this->call('POST', '/stripe/webhook', [], [], [], ['HTTP_STRIPE_SIGNATURE' => $sig], $payload);
+    }
+
+    /** Closing the tab after paying must not lose the order. */
+    public function test_a_signed_webhook_records_the_order_once()
+    {
+        $user = User::factory()->create();
+        $row = $this->cartRow($user);
+
+        $this->webhook($row, $user)->assertOk();
+        $this->webhook($row, $user)->assertOk();   // Stripe redelivers; must not record twice
+
+        $this->assertSame(1, myOrder::count());
+        $order = myOrder::first();
+        $this->assertEquals(11, $order->amount);
+        $this->assertSame((string) $order->id, (string) $row->fresh()->orderID);
+    }
+
+    public function test_an_unsigned_webhook_records_nothing()
+    {
+        $user = User::factory()->create();
+        $row = $this->cartRow($user);
+
+        $this->webhook($row, $user, 'whsec_wrong')->assertStatus(400);
+
+        $this->assertSame(0, myOrder::count());
+        $this->assertSame('', $row->fresh()->orderID);
+    }
+
     /** Card data must never enter this app's own HTML. */
     public function test_the_cart_page_collects_no_card_details()
     {
