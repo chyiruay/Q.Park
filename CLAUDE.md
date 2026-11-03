@@ -14,11 +14,18 @@ worth defending. Keep it in sync when behaviour changes.
 
 Deployed on Laravel Cloud, auto-deploying from `main`. See [Deployment](#deployment).
 
-## Runtime requirement: PHP 8.3 or newer
+## Runtime requirement: PHP 8.4.1 or newer
 
-`composer.json` requires `php ^8.3` (Laravel 13's floor). 8.4 is fine and is what this machine
-runs. The old Carbon-on-8.4 deprecation notice is gone — that was Carbon 2.x under Laravel 10,
-and the upgrade to Laravel 13 brought Carbon 3.
+Laravel 13's own floor is `^8.3`, but **the locked dependencies need 8.4.1**: 17 Symfony 8.1
+packages declare `php >=8.4.1`. `composer.json` used to say `^8.3`, which was a trap — it
+resolved fine on this machine (8.4.22) and failed in CI on 8.3 with a wall of
+"locked to version … an update of this package was not requested". It now says `^8.4.1`, so
+the mismatch fails fast with one clear line instead.
+
+Pin CI and the deploy platform to **8.4**, not 8.3.
+
+The old Carbon-on-8.4 deprecation notice is gone — that was Carbon 2.x under Laravel 10, and
+the upgrade to Laravel 13 brought Carbon 3.
 
 `app/Http/Kernel.php` and `app/Console/Kernel.php` still exist even though Laravel 11+ moved
 middleware and routing into `bootstrap/app.php`. The framework still honours them, so the

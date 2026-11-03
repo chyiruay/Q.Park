@@ -14,7 +14,8 @@ jobs:
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          # 8.4, not 8.3: composer.lock holds Symfony 8.1, which requires >=8.4.1
+          php-version: '8.4'
           extensions: dom, mbstring, zip, gd, sqlite3, pdo_sqlite
           coverage: none
 

@@ -23,6 +23,23 @@ class LoginSeparationTest extends TestCase
         $this->get('/admin/login')->assertStatus(200)->assertSee('Back to customer login');
     }
 
+    /**
+     * Both pages share layouts/app, so they share one background image. The path has
+     * to be root-relative: a bare 'images/…' resolves against the page's own
+     * directory, which 404s on /admin/login (and /password/reset, /email/verify) and
+     * renders with no background while still returning 200 — invisible to a status
+     * code assertion.
+     */
+    public function test_both_login_pages_reference_the_same_background_image()
+    {
+        foreach (['/login', '/admin/login', '/password/reset'] as $url) {
+            $this->get($url)
+                ->assertStatus(200)
+                ->assertSee(asset('images/background.jpeg'), false)
+                ->assertDontSee("url('images/background.jpeg')", false);
+        }
+    }
+
     public function test_customer_logs_in_on_the_customer_page()
     {
         $customer = User::factory()->create();

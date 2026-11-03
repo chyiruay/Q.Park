@@ -29,7 +29,7 @@ the app runs on Stripe test keys.
 
 ## Built with
 
-Laravel 13 · PHP 8.3+ · MySQL · Blade · Bootstrap · Vite · Stripe Checkout ·
+Laravel 13 · PHP 8.4+ · MySQL · Blade · Bootstrap · Vite · Stripe Checkout ·
 `barryvdh/laravel-dompdf` · deployed on Laravel Cloud
 
 ## Running it locally

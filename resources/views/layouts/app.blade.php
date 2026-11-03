@@ -17,7 +17,7 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 
     <!-- Style -->
-    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/logo.png') }}">
     <style>
     /* Scoped to main: a bare .container rule also hit the shared header's
        navbar container, making this page's header taller than every other. */
@@ -25,7 +25,10 @@
             padding-top:20px;
         }
     body{
-        background-image:url('images/background.jpeg');
+        /* asset(), like the other layouts: a bare 'images/…' resolves against the
+           page's own directory, so /admin/login, /password/reset and /email/verify
+           all 404'd on it and rendered with no background at all. */
+        background-image:url("{{ asset('images/background.jpeg') }}");
         background-repeat: no-repeat;
         background-size: cover;
         background-position: center;
