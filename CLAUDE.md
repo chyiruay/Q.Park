@@ -8,23 +8,21 @@ Q.Park — a parking-space booking app. Users browse parking "products" by categ
 space to a cart, and check out via Stripe. Admins manage products/categories/users and
 export a sales report as PDF.
 
-Laravel 10.39 + Blade, `laravel/ui` auth scaffolding (not Breeze/Jetstream), Vite for assets.
-`README.md` is the stock Laravel readme and contains nothing project-specific.
+Laravel 13 + Blade, `laravel/ui` auth scaffolding (not Breeze/Jetstream), Vite for assets.
+`README.md` is written for a human reader — live demo URL, setup, and the design decisions
+worth defending. Keep it in sync when behaviour changes.
 
-## Runtime requirement: PHP 8.2 or 8.3 — not 8.4
+Deployed on Laravel Cloud, auto-deploying from `main`. See [Deployment](#deployment).
 
-PHP 8.4 added `DateTime::createFromTimestamp()`, which collides with the pinned
-`nesbot/carbon` 2.72.1 and prints a deprecation notice into page output. The fix is the PHP
-version, not a Carbon bump — the whole dependency tree is capped below 8.4
-(`nette/schema` requires `php 7.1 - 8.3`), so `composer update nesbot/carbon` fails to resolve.
+## Runtime requirement: PHP 8.3 or newer
 
-```bash
-brew unlink php && brew link --overwrite --force php@8.2
-```
+`composer.json` requires `php ^8.3` (Laravel 13's floor). 8.4 is fine and is what this machine
+runs. The old Carbon-on-8.4 deprecation notice is gone — that was Carbon 2.x under Laravel 10,
+and the upgrade to Laravel 13 brought Carbon 3.
 
-The notice fires while PHP compiles the Carbon class, before Laravel installs its error
-handler — so it bypasses `APP_DEBUG` and lands as raw text above the HTML. Only
-`display_errors=Off` in `php.ini` suppresses it, which also hides real fatals. Use 8.2.
+`app/Http/Kernel.php` and `app/Console/Kernel.php` still exist even though Laravel 11+ moved
+middleware and routing into `bootstrap/app.php`. The framework still honours them, so the
+upgrade left them in place. Don't assume `bootstrap/app.php` is where middleware is registered.
 
 ## Commands
 
@@ -41,7 +39,7 @@ npm run dev           # terminal 2
 # Test
 php artisan test
 php artisan test --filter=SmokeTest
-php artisan test --filter=test_products_page_loads   # single test
+php artisan test --filter=test_public_pages_load     # single test
 
 npm run build         # production assets into public/build/
 ```
@@ -55,25 +53,34 @@ or `php artisan serve --port=8080`.
 
 ## Architecture
 
-### Two parallel frontend stacks
+### One Vite pipeline — every layout needs the build
 
-This is the thing that surprises people. The app has two unrelated asset pipelines:
+**All six layouts call `@vite(['resources/sass/app.scss', 'resources/js/app.js'])`**, so every
+page in the app depends on built assets. There is no CDN fallback: the only external asset
+left anywhere is a jQuery `<script>` in `salesReport.blade.php`, which is dead weight because
+dompdf never executes JavaScript.
 
-| | Vite pipeline | CDN pipeline |
+| Layout | Views | Audience |
 |---|---|---|
-| Layout | `layouts/app.blade.php` | `layout`, `layoutadmin`, `layoutproduct`, `layouthome`, `layouthelp` |
-| Assets | `@vite([...])` → `resources/sass/app.scss`, `resources/js/app.js`, Bootstrap 5 | `<script src="https://...">` Bootstrap 4.6 + jQuery 3.5 |
-| Views | the 7 auth/home views | the other 22 views |
-| Needs `npm run dev`? | yes | no |
+| `layout` | 8 | shared — profile, password, delete account |
+| `layoutadmin` | 10 | admin |
+| `layouts/app` | 7 | `laravel/ui` auth views + `/home` |
+| `layoutproduct` | 2 | customer — car park listing and detail |
+| `layouthome` | 1 | the landing page |
+| `layouthelp` | 1 | help page |
 
-`layout` is shared between customers and admins (profile, password, delete account), so it
-picks the header variant and background image from `Auth::user()?->isAdmin` — an admin opening
-My Profile stays in the admin skin instead of landing on the customer site. The other CDN
-layouts are fixed to one audience.
+Bootstrap 5.3.2 comes from the npm bundle, not a CDN. Editing `app.scss` affects every page,
+admin pages included.
 
-So `npm run dev` only affects login, register, password reset, and `/home`. Editing
-`app.scss` does nothing for the admin or product pages — those are styled by CDN Bootstrap 4
-plus inline styles in the layouts.
+`layout` is shared between customers and admins, so it picks the header variant and background
+image from `Auth::user()?->isAdmin` — an admin opening My Profile stays in the admin skin
+instead of landing on the customer site. The other layouts are fixed to one audience.
+
+**Consequence for deploys and CI:** a checkout without `public/build` throws
+`ViteManifestNotFoundException` on *every* route. `npm run build` is not optional in the deploy
+pipeline, and `.github/workflows/tests.yml` has to build assets before `php artisan test` or
+all the page tests fail. Locally this is easy to miss: if `public/hot` exists from a past
+`npm run dev`, `@vite` points at the dev server and tests pass with no `public/build` at all.
 
 Vue 3 is wired up but unused: `resources/js/components/` holds only the stock
 `ExampleComponent.vue`. Don't assume a Vue frontend exists.
@@ -172,25 +179,29 @@ take `{id}` with no owner check. Cart deletes are scoped to `Auth::id()` the sam
 
 ### Payments and reports
 
-`PaymentController::paymentPost()` charges via `Stripe\Charge::create()` (the legacy Charges
-API). Keys come from `config('services.stripe.key'|'.secret')`, so `config:cache` is safe —
+`PaymentController::paymentPost()` creates a `Stripe\Checkout\Session` and redirects to
+Stripe's hosted payment page. Keys come from
+`config('services.stripe.key'|'.secret'|'.webhook_secret')`, so `config:cache` is safe —
 don't go back to `env()` in a controller or template. **`STRIPE_KEY`/`STRIPE_SECRET` are empty
 placeholders in `.env`**; until you paste a `pk_test_…`/`sk_test_…` pair, Pay Now shows
 "Card payment is not configured yet" rather than failing silently.
+
+**There are no card inputs in this app.** Stripe Checkout hosts the card form on its own
+domain, so card details never reach this origin, let alone the server. Don't add a local card
+form — that would put PCI scope back on the app for no gain.
+
+`success_url` is built from `route('payment.return')`, so **`APP_URL` must be the real domain
+in every deployed environment** or paying customers get redirected somewhere that doesn't exist.
 
 The charged amount is recomputed server-side from `products.price` for the ticked cart rows
 (scoped to the signed-in user and `orderID = ''`). The posted `sub` field is display-only —
 it used to be what got charged, so anyone could edit the POST and pay RM 0.01.
 
-`myCart.blade.php` keeps the Stripe form **outside** the `<table>`: a `<form>` placed inside a
-table gets hoisted out by the HTML parser, which left the error banner outside the form so
-`showError()` silently matched nothing. The row checkboxes stay in the table and carry
+`myCart.blade.php` keeps the payment form (`#payment-form`, line 140) **outside** the
+`<table>`: a `<form>` placed inside a table gets hoisted out by the HTML parser, which broke
+the error banner's relationship to the form. The row checkboxes stay in the table and carry
 `form="payment-form"`, so the browser submits them with the payment form from wherever they
 sit — no JS copying needed.
-
-**The card inputs have no `name` on purpose.** Card details must never reach the server;
-Stripe.js finds them by class (`.card-number`, `.card-cvc`, …) and posts only the token it
-returns. Giving them names would put raw card numbers in request logs. Don't "fix" that.
 
 Orders are recorded by `PaymentController::recordPayment()`, reached from both the
 `/checkout/return` redirect and the `POST /stripe/webhook` endpoint (`checkout.session.completed`
@@ -213,47 +224,89 @@ the client chose the extension. Rows seeded before this still use readable names
 MySQL `qpark` database. This matters because `tests/Feature/SmokeTest.php` uses
 `RefreshDatabase`, which drops and re-migrates whatever it's pointed at.
 
-Four feature tests, 43 cases:
+Seven feature tests (plus the stock `ExampleTest`), 91 cases:
 
 - `SmokeTest` — every main page returns 200 for the right audience. Status codes only.
 - `AccessControlTest` — guests redirected, non-admins 403'd, deletes refused over GET, and no
   cross-user deletes. Assert new routes here, not in `SmokeTest`.
 - `FormValidationTest` — the submissions that used to 500 (missing upload, empty feedback),
   plus upload type/filename handling and decimal prices.
-- `BookingTest` — add-to-cart validation and that date/start time survive the round trip.
+- `BookingTest` — add-to-cart validation, clash detection, and that date/start time survive
+  the round trip.
+- `PaymentTest` — the server-side amount, checkout session creation, and `recordPayment()`
+  from both the return redirect and the webhook.
+- `PaymentOwnershipTest` — one customer can't pay for or read another's cart rows.
+- `LoginSeparationTest` — `/login` and `/admin/login` won't accept each other's accounts.
+
+CI runs these on every push to `main` and every PR (`.github/workflows/tests.yml`). It builds
+assets first, because `@vite` is in every layout — see the frontend section above.
 
 `myOrder`/`Order` factories still don't exist; `UserFactory`, `ProductFactory` and
 `CategoryFactory` do. `UserFactory` must set `phone_number` — the column is `NOT NULL UNIQUE`,
 and the stock factory omitted it, so `User::factory()->create()` failed until it was added.
 `UserFactory::admin()` uses `forceFill` because `isAdmin` is deliberately not mass assignable.
 
-## Planned upgrade path
+## Deployment
 
-Laravel 10 is past end of security support. The plan is one major at a time on a branch,
-running `php artisan test` after each:
+Laravel Cloud, auto-deploying from `main` — **every merge to `main` goes straight to
+production**, which is why CI matters. `migrate --force` runs on each deploy, so a destructive
+migration executes against live data with no prompt; export first.
 
-1. `composer update` within Laravel 10 first (10.39 → 10.50.3) — low risk, gets the tree current.
-2. 10 → 11 — the structural one: `app/Http/Kernel.php` and `app/Console/Kernel.php` are
-   removed, middleware and routing move into `bootstrap/app.php`. Needs `laravel/ui` ≥ 4.5 and
-   Sanctum 4.
-3. 11 → 12.
-4. 12 → 13 — **requires PHP ^8.3**, so relink to `php@8.4` at this step.
+Build/deploy commands:
 
-PHP floors: Laravel 11 and 12 are `^8.2`; Laravel 13 is `^8.3`.
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci --include=dev && npm run build
+php artisan migrate --force
+php artisan route:cache && php artisan view:cache
+```
+
+Four things that cost real time to work out:
+
+- **No `config:cache` in the build command.** The build container has no injected database
+  credentials, so `config:cache` freezes `config/database.php`'s `forge`/`127.0.0.1` defaults
+  into `bootstrap/cache/config.php` and the running app then ignores the real values. The
+  symptom is `SQLSTATE[HY000] [2002] Connection refused … Database: forge`. `route:cache` and
+  `view:cache` don't read env and are safe.
+- **`SESSION_DRIVER` must not be `database`.** There is no `sessions` migration in this repo
+  (nor `cache` — `jobs` and `failed_jobs` do exist), so the platform's injected default 500s
+  every request. `cookie` works with no migration. Note `config/cache.php` still reads the
+  pre-Laravel-11
+  `CACHE_DRIVER` name, so an injected `CACHE_STORE` is silently ignored — which is lucky,
+  because login throttling uses the cache.
+- **Injected env vars land in a server-side `.env`, not the process environment.** `printenv`
+  shows nothing useful; use `grep '^DB_' .env` or
+  `php artisan tinker --execute="print_r(config('database.connections.mysql'));"`. Don't hand-edit
+  that file — the next deploy regenerates it.
+- **The filesystem is ephemeral.** `storeUpload()` writes to `public/images/` and
+  `public/floorPlan/`, so admin uploads vanish on redeploy. The seeded images are committed, so
+  the demo looks intact. The fix is an S3 disk.
+
+The container shell is also ephemeral: running `composer install` or `npm run build` there
+patches only the live instance and is wiped by the next deploy.
+
+**`QUEUE_CONNECTION=database` needs the scheduler enabled.** `orderPaid` is queued, and
+`app/Console/Kernel.php` drains the queue with a per-minute
+`queue:work --stop-when-empty` rather than a resident worker — a process idling 24/7 defeats
+compute that scales to zero. If the platform's scheduler is off, confirmation emails queue up
+and never send, with nothing in `failed_jobs` to show it. Check `jobs` for a backlog.
 
 ## Known issues
 
 - `.env` ships `APP_ENV=local` / `APP_DEBUG=true`, so an unhandled exception renders Ignition
   with full source, the SQL and the git hash. Fine locally; set `APP_DEBUG=false` anywhere
   else. There is no production env file in the repo.
-- `Stripe\Charge::create()` and Stripe.js **v2** are both long deprecated. Stripe blocks raw
-  card numbers from the browser on newer accounts, so `Stripe.createToken` may be refused even
-  with valid keys. The modern path is Payment Intents plus Stripe Elements. The currency is
-  hardcoded `MYR`.
+- The currency is hardcoded `MYR`.
+- `App\Notifications\orderPaid` is constructed as `new orderPaid($email)` but its constructor
+  takes no arguments — PHP ignores the extra one, so the address is passed via
+  `Notification::route('mail', …)` and the argument is dead. The mail body is also generic and
+  mentions nothing about the booking.
+- `salesReport.blade.php` loads jQuery from `ajax.googleapis.com`. dompdf doesn't execute
+  JavaScript, so it's dead weight — and the only external asset reference left in the views.
 - Deleting a category is blocked while any car park still points at it, because
   `products.categoryID` is a plain string with no foreign key. There's no "move to another
   category" action, so reassign each car park by hand first.
 - Two migrations exist for password resets (`password_resets` and `password_reset_tokens`).
   Different table names, so migrations run clean, but `password_resets` is dead.
 - Vue is wired up but unused; `resources/js/app.js` only mounts `#app` when it exists, since
-  the CDN layouts have no such element.
+  only `layouts/app.blade.php` has such an element.

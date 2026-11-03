@@ -6,7 +6,9 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\myCart;
 use App\Models\myOrder;
+use App\Notifications\orderPaid;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 /**
@@ -170,6 +172,40 @@ class PaymentTest extends TestCase
 
         $this->assertSame(0, myOrder::count());
         $this->assertSame('', $row->fresh()->orderID);
+    }
+
+    /** The confirmation goes to the customer who paid, and only once per order. */
+    public function test_a_recorded_order_notifies_the_customer()
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $row = $this->cartRow($user);
+
+        $this->webhook($row, $user)->assertOk();
+        $this->webhook($row, $user)->assertOk();   // redelivery records nothing, so mails nothing
+
+        Notification::assertSentTimes(orderPaid::class, 1);
+        Notification::assertSentOnDemand(
+            orderPaid::class,
+            fn($notification, $channels, $notifiable) => $notifiable->routes['mail'] === $user->email
+        );
+    }
+
+    /** A mail failure must not undo a payment that already went through. */
+    public function test_a_failing_notification_leaves_the_order_recorded()
+    {
+        Notification::fake();
+        //once() so this fails loudly if the send is never reached and the test is toothless
+        Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('smtp down'));
+
+        $user = User::factory()->create();
+        $row = $this->cartRow($user);
+
+        $this->webhook($row, $user)->assertOk();
+
+        $this->assertSame(1, myOrder::count());
+        $this->assertNotSame('', $row->fresh()->orderID);
     }
 
     /** Card data must never enter this app's own HTML. */

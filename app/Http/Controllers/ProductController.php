@@ -19,7 +19,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = \App\Models\Category::all();
+        $categories = Category::cached();
         return view('insertProduct')->with('categoryID', $categories);
     }
 
@@ -48,7 +48,7 @@ class ProductController extends Controller
 
         $product=Product::findOrFail($id);  //404 instead of a blank page for a bad id
         return view('order')->with('products',[$product])
-                                    ->with('categories',Category::all());
+                                    ->with('categories',Category::cached());
     }
 
     public function view(){
@@ -83,7 +83,7 @@ class ProductController extends Controller
 
         $product=Product::findOrFail($id);
         return view('editProduct')->with('products',[$product])
-                                    ->with('categories',Category::all());
+                                    ->with('categories',Category::cached());
     }
 
     public function update(Request $request){

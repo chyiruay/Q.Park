@@ -1,0 +1,6 @@
+
+- Why a 35-minute hold, and why is the Stripe session 31?
+- What does lockForUpdate actually do, and why doesn't SQLite exercise it?
+- Why does isTaken() scan the day either side of the booking date?
+- Why do the card inputs have no name attribute?
+- Why camelCase foreign keys, and why do the controllers use manual joins instead of relationships?

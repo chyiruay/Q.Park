@@ -3,7 +3,7 @@
     <div class="container py-5">
         <div class="row g-4">
 
-            <div class="col-12 col-lg-7">
+            <div class="col-12 col-lg-10">
                 <h2>Additional Information</h2>
                 <p class="mb-0">
                     <strong>Quick Park</strong> is committed to making a fast and convenient
@@ -12,7 +12,7 @@
                 </p>
             </div>
 
-            <div class="col-12 col-lg-5">
+            <div class="col-12 col-lg-2">
                 <h6>Contact Us</h6>
                 <address class="mb-2">
                     1, Jalan Satu 1,<br>

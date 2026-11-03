@@ -7,7 +7,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class orderPaid extends Notification
+/**
+ * Queued, because recordPayment() runs inside the Stripe webhook: Stripe retries a
+ * delivery it doesn't get a prompt 200 for, and SMTP latency is the slowest thing in
+ * that request. Dispatching takes a row insert; the send happens out of band.
+ *
+ * Trade-off: a send that fails now lands in failed_jobs rather than being caught and
+ * report()ed by the caller, so a dead worker loses confirmations silently. Check
+ * failed_jobs if customers stop receiving them.
+ */
+class orderPaid extends Notification implements ShouldQueue
 {
     use Queueable;
 

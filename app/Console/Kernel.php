@@ -12,7 +12,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        /**
+         * Drain the queue once a minute instead of running a resident worker. The only
+         * queued job is the order confirmation email, a few a day — a process sitting
+         * idle 24/7 would cost more than it saves on compute that scales to zero.
+         *
+         * shortcut: confirmations are delayed up to ~60s; switch to a resident
+         * `queue:work` if anything is ever queued that must run immediately.
+         */
+        $schedule->command('queue:work --stop-when-empty --tries=3')
+            ->everyMinute()
+            ->withoutOverlapping();
     }
 
     /**

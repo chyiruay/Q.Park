@@ -15,7 +15,7 @@ class CategoryController extends Controller
 {
     public function insert()
     {
-        $categories = \App\Models\Category::all();
+        $categories = Category::cached();
         return view('insertCategory')->with('categoryID', $categories);
     }
 
@@ -26,7 +26,10 @@ class CategoryController extends Controller
         ]);
 
         $addCategory=Category::create([
-            'id'=>$data['categoryID'],  //'id' is  database field name, categoryID is HTML input name
+            //'id' is the database field, categoryID the HTML input. The rule is
+            //nullable, so validate() omits the key entirely when the field is left
+            //blank — reading it directly used to 500 the form.
+            'id'=>$data['categoryID'] ?? null,
             'name'=>$data['categoryName'],
         ]);
         return redirect()->route('viewCategory'); //after insert redirect to view category
@@ -45,7 +48,7 @@ class CategoryController extends Controller
 
 
     public function index(){
-        $category=Category::all(); //apply SQL select * from categories
+        $category=Category::cached();
         return view('insertCategory')->with('categories',$category);
     }
 
