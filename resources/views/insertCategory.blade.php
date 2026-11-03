@@ -1,32 +1,31 @@
 @extends('layoutadmin')
+
 @section('content')
-<div class="row">
-    <div class="col-sm-3"></div>
-    <div class="col-sm-6">
-        <br></br>
-        <div class="card">
-            <div class="card-header" style="background-color:lightgray; font-size:40px;">Create New Category</div>
-                <div class="card-body" style="background-color:lightgray;">
-                    @include('partials.alerts')
-                    <form method="POST", action="{{ route('addCategory')}}">
-                        @CSRF
-                        <div class="mb-3">
-                            <label for="Category ID">Category ID <small>(leave blank to auto-number)</small></label>
-                            <input type="number" min="1" class="form-control" id="categoryID" name="categoryID" value="{{ old('categoryID') }}">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="Category name">Name</label>
-                            <input type="text" class="form-control" id="categoryName" name="categoryName" value="{{ old('categoryName') }}" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <br></br>
+<div class="container admin-dash">
+    <div class="admin-dash__head">
+        <h1>Add Category</h1>
+        <p>Car parks are grouped under categories on the customer listing.</p>
     </div>
-    <div class="col-sm-3"></div>
-</div>
 
+    <div class="admin-form admin-form--narrow">
+        @include('partials.alerts')
+
+        <form method="POST" action="{{ route('addCategory') }}" class="admin-panel" novalidate>
+            @csrf
+
+            <div class="mb-4">
+                <label for="categoryName" class="form-label fw-semibold">Name</label>
+                <input type="text" id="categoryName" name="categoryName"
+                       class="form-control @error('categoryName') is-invalid @enderror"
+                       value="{{ old('categoryName') }}" maxlength="255" required autofocus>
+                <div class="form-text">Must not match an existing category.</div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row-reverse gap-2">
+                <button type="submit" class="btn btn-qpark flex-sm-fill">Add Category</button>
+                <a href="{{ route('viewCategory') }}" class="btn btn-outline-secondary flex-sm-fill">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

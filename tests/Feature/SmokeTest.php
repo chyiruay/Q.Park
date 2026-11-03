@@ -25,7 +25,14 @@ class SmokeTest extends TestCase
     {
         $product = Product::factory()->create();
 
-        foreach (['/', '/help', '/login', '/register', '/products', '/viewDetail/'.$product->categoryID] as $url) {
+        $urls = [
+            '/', '/help', '/login', '/admin/login', '/register', '/products',
+            '/viewDetail/'.$product->categoryID,
+            '/password/reset',                  // request a link
+            '/password/reset/any-token-shape',  // the page the emailed link lands on
+        ];
+
+        foreach ($urls as $url) {
             $this->get($url)->assertStatus(200, $url);
         }
     }
