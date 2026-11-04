@@ -53,10 +53,16 @@ npm run build         # production assets into public/build/
 
 ### Browse at `http://127.0.0.1:8000`, not `localhost:8000`
 
-`php artisan serve` binds IPv4-only (`127.0.0.1`). On this dev machine a Docker container
-(`sradius-nginx`, project `gam-backend`) holds `*:8000` on IPv6, and macOS resolves
-`localhost` to `::1` first — so `localhost:8000` serves the Docker app instead. Use the IP,
-or `php artisan serve --port=8080`.
+`php artisan serve` binds IPv4-only (`127.0.0.1`), and macOS resolves `localhost` to `::1`
+first. **Whether `localhost:8000` works depends on what else is running.** With nothing on
+IPv6 port 8000 the connection is refused and the browser falls back to IPv4, so `localhost`
+reaches Laravel fine. But a Docker container on this machine (`sradius-nginx`, project
+`gam-backend`) holds `*:8000` *including* IPv6 when it's up — and then `localhost:8000`
+silently serves the Docker app instead, with no error to explain it.
+
+So `127.0.0.1:8000` is the address that can't be hijacked. Whichever you use, keep `APP_URL`
+matching it: `asset()` builds image URLs from it, and session cookies are per-origin, so
+mixing `localhost` and `127.0.0.1` logs you out unpredictably.
 
 ## Architecture
 
@@ -89,8 +95,11 @@ pipeline, and `.github/workflows/tests.yml` has to build assets before `php arti
 all the page tests fail. Locally this is easy to miss: if `public/hot` exists from a past
 `npm run dev`, `@vite` points at the dev server and tests pass with no `public/build` at all.
 
-Vue 3 is wired up but unused: `resources/js/components/` holds only the stock
-`ExampleComponent.vue`. Don't assume a Vue frontend exists.
+**There is no JS framework.** Vue 3 used to be installed and mounted an unused stock
+`ExampleComponent.vue`; it was removed, which cut the JS bundle from 356 kB to 200 kB.
+`resources/js/app.js` now only imports `bootstrap.js` (Bootstrap 5, jQuery, axios). The
+`#app` div in `layouts/app.blade.php` is left in place but inert — nothing mounts to it.
+Don't reintroduce a framework for a server-rendered Blade app without a reason.
 
 When `npm run dev` is running, `public/hot` points at `http://[::1]:5173`. `npm run build`
 deletes that file and switches `@vite` to the `public/build/` manifest.
@@ -315,5 +324,5 @@ and never send, with nothing in `failed_jobs` to show it. Check `jobs` for a bac
   category" action, so reassign each car park by hand first.
 - Two migrations exist for password resets (`password_resets` and `password_reset_tokens`).
   Different table names, so migrations run clean, but `password_resets` is dead.
-- Vue is wired up but unused; `resources/js/app.js` only mounts `#app` when it exists, since
-  only `layouts/app.blade.php` has such an element.
+- `layouts/app.blade.php` still has an `id="app"` div, left over from the Vue mount point.
+  Nothing mounts to it; it may be carrying layout CSS, which is why it wasn't removed.

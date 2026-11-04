@@ -9,16 +9,9 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 
     <title>Quick Park</title>
-    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/logo.png') }}">
     @php($isAdmin = Auth::user()?->isAdmin ?? false)
     <style>
-      body{
-        {{-- profile/password/delete pages are shared, so keep admins in the admin skin --}}
-        background-image: url("{{ asset($isAdmin ? 'images/bg_admin.jpg' : 'images/parking_1.webp') }}");
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        background-size: 100% 100%;
-      }
       .hometitle{
         color:white;
         font-size:60px;
@@ -63,7 +56,8 @@
     }
     </style>
   </head>
-  <body>
+  {{-- profile/password/delete pages are shared, so keep admins in the admin skin --}}
+  <body class="{{ $isAdmin ? 'bg-admin' : 'bg-customer' }}">
 @include('partials.header', ['variant' => $isAdmin ? 'admin' : 'customer'])
 
 @yield('content')

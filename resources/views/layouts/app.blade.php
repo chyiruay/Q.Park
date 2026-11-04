@@ -24,20 +24,10 @@
     main .container{
             padding-top:20px;
         }
-    body{
-        /* asset(), like the other layouts: a bare 'images/…' resolves against the
-           page's own directory, so /admin/login, /password/reset and /email/verify
-           all 404'd on it and rendered with no background at all. */
-        background-image:url("{{ asset('images/background.jpeg') }}");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }
     </style>
 
 </head>
-<body>
+<body class="bg-auth">
     <div id="app">
         @include('partials.header')
 

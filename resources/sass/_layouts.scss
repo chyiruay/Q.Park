@@ -1,0 +1,33 @@
+// Page backgrounds for the Blade layouts.
+//
+// These used to sit in each layout's inline <style> as asset('images/…'), which meant
+// Vite never saw them: it only follows url() references from its own entry points, so
+// those images were served raw from public/images while the SCSS ones were compiled,
+// fingerprinted and emitted into build/assets. Declaring them here puts every
+// background through the same pipeline.
+//
+// The layouts pick a class; the image lives here. That keeps the one dynamic case
+// (layout.blade.php serves both admins and customers) out of the stylesheet without
+// putting an image path back into Blade.
+
+body.bg-admin {
+    background-image: url('../../public/images/bg_admin.jpg');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: 100% 100%;
+}
+
+body.bg-customer {
+    background-image: url('../../public/images/parking_1.webp');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: 100% 100%;
+}
+
+body.bg-auth {
+    background-image: url('../../public/images/background.jpeg');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+}

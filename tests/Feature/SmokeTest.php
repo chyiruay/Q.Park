@@ -70,7 +70,7 @@ class SmokeTest extends TestCase
         foreach (['/viewProfile', '/editProfile/'.$admin->id, '/editPassword/'.$admin->id] as $url) {
             $this->actingAs($admin)->get($url)
                 ->assertStatus(200, $url)
-                ->assertSee('bg_admin.jpg')
+                ->assertSee('class="bg-admin"', false)   //the admin skin, not the customer one
                 ->assertSee(route('viewCategory'));
         }
     }

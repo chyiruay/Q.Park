@@ -9,15 +9,8 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 
     <title>Quick Park</title>
-    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/logo.png') }}">
     <style>
-    body{
-        background-image:url("{{ asset('images/bg_admin.jpg') }}");
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        background-size: 100% 100%;
-    }
-
     main button {
         background-color: green;
         border: 1px solid green;
@@ -65,7 +58,7 @@
     }
     </style>
   </head>
-  <body>
+  <body class="bg-admin">
 @include('partials.header', ['variant' => 'admin'])
 
 

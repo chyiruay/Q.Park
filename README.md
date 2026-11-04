@@ -37,6 +37,7 @@ Laravel 13 · PHP 8.4+ · MySQL · Blade · Bootstrap · Vite · Stripe Checkout
 ```bash
 composer install && npm install
 cp .env.example .env && php artisan key:generate
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS qpark"
 php artisan migrate --seed
 ```
 
@@ -44,8 +45,13 @@ Then, in two terminals:
 
 ```bash
 php artisan serve     # http://127.0.0.1:8000
-npm run dev
+npm run dev           # compiles the CSS/JS; the site needs it
 ```
+
+Requires **PHP 8.4.1+** (the locked Symfony packages need it), Node 20+, and MySQL.
+Browse at `localhost:8000`. Pages work from any host you use — `asset()` and `url()` take the
+host from the request — but `APP_URL` is the fallback for anything generated outside a
+request, such as the queued order-confirmation email, so keep it matching.
 
 Seeded accounts are `user@qpark.test` and `admin@qpark.test`, both with the password
 `password`. Admins sign in at `/admin/login`, customers at `/login`.
@@ -147,4 +153,3 @@ double-booking check in one place instead of split across a client cache and an 
 - The currency is hardcoded `MYR`.
 - Deleting a category is blocked while any car park still references it, and there's no "move
   to another category" action, so car parks must be reassigned by hand first.
-- Vue 3 is installed and mounts an unused example component. It's scaffolding, not a frontend.

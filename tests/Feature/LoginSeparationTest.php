@@ -24,19 +24,18 @@ class LoginSeparationTest extends TestCase
     }
 
     /**
-     * Both pages share layouts/app, so they share one background image. The path has
-     * to be root-relative: a bare 'images/…' resolves against the page's own
-     * directory, which 404s on /admin/login (and /password/reset, /email/verify) and
-     * renders with no background while still returning 200 — invisible to a status
-     * code assertion.
+     * Every page on layouts/app shares one background, declared in _layouts.scss as
+     * body.bg-auth. Asserting the class rather than an image path keeps this honest
+     * after the image moved out of the layout's inline <style> and into the compiled
+     * stylesheet — and it catches a layout that silently stops opting in, which still
+     * returns 200 and just renders with no background.
      */
-    public function test_both_login_pages_reference_the_same_background_image()
+    public function test_every_auth_page_opts_into_the_shared_background()
     {
-        foreach (['/login', '/admin/login', '/password/reset'] as $url) {
+        foreach (['/login', '/admin/login', '/register', '/password/reset'] as $url) {
             $this->get($url)
-                ->assertStatus(200)
-                ->assertSee(asset('images/background.jpeg'), false)
-                ->assertDontSee("url('images/background.jpeg')", false);
+                ->assertStatus(200, $url)
+                ->assertSee('class="bg-auth"', false);
         }
     }
 
