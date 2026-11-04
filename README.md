@@ -10,11 +10,19 @@ Sign in as a customer with **`user@qpark.test`** / **`password`** to book a bay 
 Stripe's test card `4242 4242 4242 4242` (any future expiry, any CVC). No real money moves —
 the app runs on Stripe test keys.
 
-<!-- Drop screenshots into docs/ and uncomment:
-![Browsing car parks](docs/products.png)
-![Booking a bay](docs/booking.png)
-![Admin sales report](docs/report.png)
--->
+![The landing page: a hero with search by car park name or category](docs/home.png)
+
+Booking a bay. The floor plan shows the layout, and the dropdown is generated from
+`Product::spaces()` — the same source `CartController::add` validates against, so a
+hand-edited `<option>` can't reach the database.
+
+![Booking a bay at Amari Hotel: floor plan, date, start time, hours, parking space and a live estimated total](docs/park.png)
+
+The cart, showing the hold mechanism. One booking is counting down its 35-minute hold;
+the other has expired, so checkout will re-check that the bay is still free before taking
+payment rather than silently selling it twice.
+
+![The cart with two bookings: one showing "Held for you: 34:47", one showing "Hold expired. Pay now and we'll check the space is still free"](docs/cart.png)
 
 ## Features
 
